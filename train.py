@@ -51,10 +51,6 @@ def run_synthetic_overfit(config_type, flux_mode, batch_size=2, seq_len=32, step
     
     total_params = sum(p.numel() for p in model.parameters())
     
-    # Calculate tied vs unique parameters
-    # This is a naive calculation for the report
-    tied_params = sum(p.numel() for name, p in model.named_parameters() if "moe" in name and "w1s" in name) * cfg.core_loops
-    
     tied_g = cfg.core_loops if config_type in ["D", "E"] else 1
     optimizer = create_optimizer(model, base_lr=1e-3, tied_g=tied_g)
     
@@ -120,6 +116,7 @@ def main():
         return
     
     # Validate each configuration
+    run_synthetic_overfit("A-MoE", "OFF", steps=20)
     run_synthetic_overfit("A", "OFF", steps=20)
     run_synthetic_overfit("B", "OFF", steps=20)
     run_synthetic_overfit("C", "OFF", steps=20)

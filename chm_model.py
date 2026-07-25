@@ -11,7 +11,7 @@ from model import ModelConfig, TransformerBlock, RMSNorm, LoopedMoETransformer
 from fluxvm_adapter import FluxVMLatentAdapter
 
 class DenseSwiGLU(nn.Module):
-    """Genuine standard dense SwiGLU FFN to bypass MoE routers for Configs B and C."""
+    """Genuine standard dense SwiGLU FFN to bypass MoE routers for Configs A, B, and C."""
     def __init__(self, d_model, d_ff):
         super().__init__()
         self.w1 = nn.Linear(d_model, d_ff, bias=False)
@@ -19,8 +19,6 @@ class DenseSwiGLU(nn.Module):
         self.w2 = nn.Linear(d_ff, d_model, bias=False)
         
     def forward(self, x, loop_idx=0):
-        # Emulate the return signature of MoELayer: (output, router_logits)
-        # We return None for router_logits
         return self.w2(F.silu(self.w1(x)) * self.w3(x)), None
 
 class CHMConfig(ModelConfig):
@@ -31,14 +29,17 @@ class CHMConfig(ModelConfig):
     coda_layers: int = 2
     flux_mode: str = "OBSERVE"
     
-    # FluxVM MAAC parameters
     tau: float = 1.0
     alpha: float = 0.1
     gamma: float = 0.9
     k: float = 2.5
     
     def __post_init__(self):
-        if self.config_type == "A":
+        if self.config_type == "A-MoE":
+            self.topology = [((self.prelude_layers + self.core_loops + self.coda_layers), 1)]
+            self.n_streams = 1
+            self.flux_mode = "OFF"
+        elif self.config_type == "A":
             self.topology = [((self.prelude_layers + self.core_loops + self.coda_layers), 1)]
             self.n_streams = 1
             self.flux_mode = "OFF"
@@ -66,7 +67,6 @@ class RecurrentCore(nn.Module):
         
         self.tied_block = TransformerBlock(cfg, n_loops_for_group=cfg.core_loops)
         
-        # Override MoELayer with DenseSwiGLU for Configs B and C
         if cfg.config_type in ["B", "C"]:
             self.tied_block.moe = DenseSwiGLU(cfg.d_model, cfg.d_ff)
         
@@ -130,14 +130,18 @@ class ControlledHyperloopMoE(nn.Module):
         super().__init__()
         self.cfg = cfg
         
-        if cfg.config_type == "A":
+        if cfg.config_type in ["A", "A-MoE"]:
             self.baseline = LoopedMoETransformer(cfg)
+            if cfg.config_type == "A":
+                # Convert the baseline's layers to dense for Config A
+                for group in self.baseline.groups:
+                    for layer in group:
+                        layer.moe = DenseSwiGLU(cfg.d_model, cfg.d_ff)
         else:
             self.tok_emb = nn.Embedding(cfg.vocab_size, cfg.d_model)
             self.drop = nn.Dropout(cfg.dropout)
             self.prelude = nn.ModuleList([TransformerBlock(cfg, n_loops_for_group=1) for _ in range(cfg.prelude_layers)])
             
-            # Override Prelude/Coda to DenseSwiGLU for Config B/C
             if cfg.config_type in ["B", "C"]:
                 for layer in self.prelude:
                     layer.moe = DenseSwiGLU(cfg.d_model, cfg.d_ff)
@@ -154,7 +158,7 @@ class ControlledHyperloopMoE(nn.Module):
             self.lm_head.weight = self.tok_emb.weight
         
     def forward(self, input_ids):
-        if self.cfg.config_type == "A":
+        if self.cfg.config_type in ["A", "A-MoE"]:
             return self.baseline(input_ids)[0], [], [], []
             
         x = self.drop(self.tok_emb(input_ids))
