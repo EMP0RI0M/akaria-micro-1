@@ -25,6 +25,18 @@ def set_seed(seed: int = 42):
 def get_parameter_count(model):
     return sum(p.numel() for p in model.parameters())
 
+def safe_telemetry_to_tensor(values, device=None):
+    """
+    Safely converts a list of mixed floats, ints, and tensors into a 1D tensor.
+    Does NOT detach or convert in-place if they are tensors (to preserve gradients where needed).
+    Instead, creates a separate diagnostic tensor for NaN/Inf checking.
+    """
+    if not isinstance(values, list):
+        values = [values]
+        
+    extracted = [v.detach().item() if torch.is_tensor(v) else float(v) for v in values]
+    return torch.as_tensor(extracted, dtype=torch.float32, device=device)
+
 def check_nan(tensor, name, step, contestant):
     if tensor is not None and (torch.isnan(tensor).any() or torch.isinf(tensor).any()):
         raise RuntimeError(f"NaN/Inf detected in {name} for contestant {contestant} at step {step}!")
@@ -100,9 +112,15 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
         loss = lm_loss
         
         if "L_barrier" in telemetry and len(telemetry["L_barrier"]) > 0:
-            barrier_tensor = torch.stack(telemetry["L_barrier"])
-            check_nan(barrier_tensor, "L_barrier", global_step, name)
-            loss = loss + barrier_tensor.sum()
+            barrier_list = telemetry["L_barrier"]
+            # Diagnostic check using detached values
+            check_nan(safe_telemetry_to_tensor(barrier_list), "L_barrier", global_step, name)
+            
+            # Loss accumulation preserves graph if tensors are differentiable
+            barrier_loss = 0
+            for b in barrier_list:
+                barrier_loss = barrier_loss + b
+            loss = loss + barrier_loss
             
         loss.backward()
         
@@ -150,13 +168,17 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
             g_act = 0.0
             i_sat = 0.0
             if "D_t" in telemetry and len(telemetry["D_t"]) > 0:
-                dt_tensor = torch.tensor([float(x) for x in telemetry["D_t"]], device=device)
+                dt_tensor = safe_telemetry_to_tensor(telemetry["D_t"])
                 check_nan(dt_tensor, "D_t", global_step, name)
                 d_mean = dt_tensor.mean().item()
             if "G_t" in telemetry and len(telemetry["G_t"]) > 0:
-                g_act = sum(1 for g in telemetry["G_t"] if g > 0) / len(telemetry["G_t"])
+                gt_tensor = safe_telemetry_to_tensor(telemetry["G_t"])
+                check_nan(gt_tensor, "G_t", global_step, name)
+                g_act = (gt_tensor > 0).float().mean().item()
             if "I_t" in telemetry and len(telemetry["I_t"]) > 0:
-                i_sat = sum(1 for i in telemetry["I_t"] if i >= 0.999) / len(telemetry["I_t"])
+                it_tensor = safe_telemetry_to_tensor(telemetry["I_t"])
+                check_nan(it_tensor, "I_t", global_step, name)
+                i_sat = (it_tensor >= 0.999).float().mean().item()
                 
             print(f"[{name}] EVAL Step {global_step} | Val CE: {val_loss:.4f} | Val PPL: {val_ppl:6.2f} | D_t: {d_mean:.2f} | Sat: {i_sat:.2f}")
             
