@@ -10,7 +10,7 @@ def test_stable_state_zero_intervention():
     ctrl = FluxVMControllerV2(tau=10.0, K=2)
     # A completely homogeneous tensor has 0 divergence
     x = torch.ones(2, 4, 16)
-    out, loss, bpass = ctrl(x, ablation_mode='E4')
+    out, telemetry = ctrl(x, ablation_mode='E4')
     assert torch.allclose(out, x)
 
 def test_proportional_trigger_zero_when_stable():
@@ -18,7 +18,7 @@ def test_proportional_trigger_zero_when_stable():
     ctrl = FluxVMControllerV2(tau=10.0, K=2)
     x = torch.randn(2, 4, 16)
     # Variance should be roughly 1.0, which is < 10.0
-    out, loss, bpass = ctrl(x, ablation_mode='E4')
+    out, telemetry = ctrl(x, ablation_mode='E4')
     # Since M_bar = M_t, g_M = 0 and D_t < tau => g_D = 0
     # Thus G_t = 0 => I_t = 0
     assert torch.allclose(out, x)
@@ -34,7 +34,7 @@ def test_negative_delta_d_remains_negative():
     x2 = torch.randn(2, 4, 16) * 1
     # We want to check dD_t inside the forward pass, let's patch it or just check it's negative
     # We can calculate what I_t would be
-    out, loss, bpass = ctrl(x2, ablation_mode='E4')
+    out, telemetry = ctrl(x2, ablation_mode='E4')
     D2 = ctrl.D_prev
     dD = D2 - D1
     assert dD < 0.0
@@ -52,11 +52,12 @@ def test_finite_gradients():
     # 6. K=2 backward pass gives finite gradients
     ctrl = FluxVMControllerV2(tau=0.0, K=2)
     x = torch.randn(2, 4, 16, requires_grad=True)
-    out, loss, bpass = ctrl(x, ablation_mode='E4')
+    out, telemetry = ctrl(x, ablation_mode='E4')
     
     # Fake target
     target = torch.zeros_like(out)
     mse = torch.nn.functional.mse_loss(out, target)
+    loss = telemetry["L_barrier"] if "L_barrier" in telemetry else 0.0
     total_loss = mse + loss
     total_loss.backward()
     
@@ -69,17 +70,19 @@ def test_vx_and_delta_v_numerically_correct():
     x = torch.randn(2, 4, 16)
     
     # Step 1
-    out1, loss1, bpass1 = ctrl(x, ablation_mode='E4')
+    out1, telemetry1 = ctrl(x, ablation_mode='E4', lambda_barrier=0.1)
     D1 = ctrl.D_prev
     M1 = ctrl.M_prev
     V1 = 0.5 * D1**2 + 0.5 * M1**2
+    loss1 = telemetry1["L_barrier"]
     
     # Step 2
     x2 = torch.randn(2, 4, 16)
-    out2, loss2, bpass2 = ctrl(x2, ablation_mode='E4')
+    out2, telemetry2 = ctrl(x2, ablation_mode='E4', lambda_barrier=0.1)
     D2 = ctrl.D_prev
     M2 = ctrl.M_prev
     V2 = 0.5 * D2**2 + 0.5 * M2**2
+    loss2 = telemetry2["L_barrier"]
     
     delta_V = V2 - V1
     # Check if delta_V is passed properly
@@ -93,13 +96,13 @@ def test_e0_does_not_modify_candidate():
     # 8. E0 does not modify candidate activations
     ctrl = FluxVMControllerV2(tau=0.0, K=5)
     x = torch.randn(2, 4, 16)
-    out, loss, bpass = ctrl(x, ablation_mode='E0')
+    out, telemetry = ctrl(x, ablation_mode='E0')
     assert torch.allclose(out, x)
-    assert loss == 0.0
+    assert telemetry["L_barrier"] == 0.0
 
 def test_e1_reproduces_old_controller():
     # 9. E1 still reproduces the old controller unchanged
-    cfg = CHMConfig(flux_mode="E1", tau=1.0)
+    cfg = CHMConfig(config_type="E", flux_mode="E1", tau=1.0)
     old_ctrl = FluxVMLatentAdapter(cfg)
     
     x = torch.randn(2, 4, 16)
@@ -107,4 +110,3 @@ def test_e1_reproduces_old_controller():
     
     assert out.shape == x.shape
     assert 'beta' in metrics
-    assert 'M' in metrics

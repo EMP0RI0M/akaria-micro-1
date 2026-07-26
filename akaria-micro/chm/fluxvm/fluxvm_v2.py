@@ -74,8 +74,17 @@ class FluxVMControllerV2(nn.Module):
         if ablation_mode == 'E0':
             self._update_state(D_t, M_t, J_t)
             telemetry.update({
-                "g_D": 0.0, "g_M": 0.0, "G_t": 0.0, "P_term": 0.0, "I_term": 0.0, "D_term": 0.0,
-                "I_t": 0.0, "V_after": V_prev, "delta_V": 0.0, "barrier_pass": 1.0, "L_barrier": 0.0
+                "g_D": torch.tensor(0.0, device=candidate.device), 
+                "g_M": torch.tensor(0.0, device=candidate.device), 
+                "G_t": torch.tensor(0.0, device=candidate.device), 
+                "P_term": torch.tensor(0.0, device=candidate.device), 
+                "I_term": torch.tensor(0.0, device=candidate.device), 
+                "D_term": torch.tensor(0.0, device=candidate.device),
+                "I_t": torch.tensor(0.0, device=candidate.device), 
+                "V_after": V_prev, 
+                "delta_V": torch.tensor(0.0, device=candidate.device), 
+                "barrier_pass": torch.tensor(1.0, device=candidate.device), 
+                "L_barrier": torch.tensor(0.0, device=candidate.device)
             })
             return candidate, telemetry
             
