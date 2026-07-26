@@ -6,13 +6,7 @@ from chm.config import CHMConfig
 from chm.dense_ffn import DenseSwiGLU
 
 # For Kaggle we assume looped-moe is installed via `pip install -e` or in PYTHONPATH
-try:
-    from model import MoELayer
-except ImportError:
-    # Fallback for local sandbox testing structure and Kaggle
-    sys.path.append(os.path.abspath('/root/looped-moe'))
-    sys.path.append(os.path.abspath('/kaggle/working/looped-moe'))
-    from model import MoELayer
+from .model import MoELayer
 
 class TiedMoE(nn.Module):
     """
