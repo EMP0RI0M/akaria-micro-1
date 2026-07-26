@@ -3,7 +3,7 @@ from chm.config import CHMConfig
 from chm.fluxvm.adapter import FluxVMLatentAdapter
 
 def test_stable_trajectory():
-    cfg = CHMConfig(flux_mode="CONTROL")
+    cfg = CHMConfig(config_type="E", flux_mode="CONTROL")
     adapter = FluxVMLatentAdapter(cfg)
     
     # Stable tensor
@@ -14,7 +14,7 @@ def test_stable_trajectory():
     assert torch.allclose(metrics["beta"], torch.ones_like(metrics["beta"]))
 
 def test_stream_instability():
-    cfg = CHMConfig(flux_mode="CONTROL")
+    cfg = CHMConfig(config_type="E", flux_mode="CONTROL")
     adapter = FluxVMLatentAdapter(cfg)
     
     # Base stable tensor
@@ -27,7 +27,7 @@ def test_stream_instability():
     assert torch.any(metrics["beta"] < 1.0) # Intervention should trigger
 
 def test_recovery_trajectory():
-    cfg = CHMConfig(flux_mode="CONTROL", gamma=0.5, alpha=1.0)
+    cfg = CHMConfig(config_type="E", flux_mode="CONTROL", gamma=0.5, alpha=1.0)
     adapter = FluxVMLatentAdapter(cfg)
     
     Y_stable = torch.ones(2, 512, 4, 384)

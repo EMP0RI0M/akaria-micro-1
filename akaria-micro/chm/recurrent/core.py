@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from chm.config import CHMConfig
-from chm.model import TransformerBlock
+from chm.blocks import TransformerBlock
 from chm.recurrent.loop_embeddings import LoopEmbeddings
 
 class RecurrentCore(nn.Module):
