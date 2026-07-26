@@ -97,9 +97,17 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
         scheduler.load_state_dict(ckpt["scheduler_state_dict"])
         global_step = ckpt["step"]
         if "cpu_rng_state" in ckpt:
-            torch.set_rng_state(ckpt["cpu_rng_state"])
-        if "cuda_rng_state" in ckpt and torch.cuda.is_available():
-            torch.cuda.set_rng_state(ckpt["cuda_rng_state"])
+            cpu_state = ckpt["cpu_rng_state"]
+            if not isinstance(cpu_state, torch.Tensor) or cpu_state.dtype != torch.uint8:
+                cpu_state = torch.tensor(cpu_state, dtype=torch.uint8, device='cpu')
+            torch.set_rng_state(cpu_state.cpu())
+            
+        if "cuda_rng_state" in ckpt and torch.cuda.is_available() and ckpt["cuda_rng_state"] is not None:
+            cuda_state = ckpt["cuda_rng_state"]
+            if not isinstance(cuda_state, torch.Tensor) or cuda_state.dtype != torch.uint8:
+                cuda_state = torch.tensor(cuda_state, dtype=torch.uint8, device='cpu')
+            torch.cuda.set_rng_state(cuda_state.cpu())
+            
         if "total_train_time" in ckpt:
             total_train_time = ckpt["total_train_time"]
         if "best_val_ce" in ckpt:
@@ -107,6 +115,19 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
             best_val_ppl = ckpt["best_val_ppl"]
             
         print(f"[{name}] Resumed from step {global_step}.")
+        
+        # If already completed, just return the metrics immediately
+        if global_step >= total_steps:
+            print(f"[{name}] Model already completed {total_steps} steps. Skipping training.")
+            return {
+                "final_val_ce": ckpt.get("best_val_ce", float('inf')), # Fallback to best if final not tracked
+                "final_val_ppl": ckpt.get("best_val_ppl", float('inf')),
+                "best_val_ce": best_val_ce,
+                "best_val_ppl": best_val_ppl,
+                "train_time": total_train_time,
+                "avg_tps": avg_tps
+            }
+            
         log_mode = "a"
     else:
         log_mode = "w"
