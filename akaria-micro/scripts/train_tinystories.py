@@ -150,7 +150,7 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
             g_act = 0.0
             i_sat = 0.0
             if "D_t" in telemetry and len(telemetry["D_t"]) > 0:
-                dt_tensor = torch.stack(telemetry["D_t"])
+                dt_tensor = torch.tensor([float(x) for x in telemetry["D_t"]], device=device)
                 check_nan(dt_tensor, "D_t", global_step, name)
                 d_mean = dt_tensor.mean().item()
             if "G_t" in telemetry and len(telemetry["G_t"]) > 0:
