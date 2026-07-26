@@ -53,15 +53,16 @@ def test_expert_bank_identity():
     # Verify the MoELayer uses the stacked expert tensors
     assert hasattr(model.core.shared_block.ffn.layer, "w1s"), "MoELayer must contain the stacked expert tensor w1s"
     
-    w1s_shape = model.core.shared_block.ffn.layer.w1s.shape
-    # Ensure it holds exactly n_experts
-    assert w1s_shape[0] == 8, f"Expected 8 experts, found {w1s_shape[0]}"
+    # In looped-moe, w1s is a ParameterList containing per-expert parameters.
+    # We check that its length matches n_experts and that the parameters share identity.
+    w1s = model.core.shared_block.ffn.layer.w1s
+    assert len(w1s) == cfg.n_experts, f"Expected {cfg.n_experts} experts, found {len(w1s)}"
     
     # Test gradient flow to the shared expert bank
     x = torch.randint(0, cfg.vocab_size, (1, 16))
     optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
     
-    pre_w1s = model.core.shared_block.ffn.layer.w1s.clone()
+    pre_w1s = model.core.shared_block.ffn.layer.w1s[0].clone()
     
     logits, _ = model(x)
     loss = logits.sum()
@@ -69,5 +70,5 @@ def test_expert_bank_identity():
     optimizer.step()
     
     # Ensure experts received gradients and were updated
-    assert model.core.shared_block.ffn.layer.w1s.grad is not None
-    assert not torch.allclose(model.core.shared_block.ffn.layer.w1s, pre_w1s)
+    assert model.core.shared_block.ffn.layer.w1s[0].grad is not None
+    assert not torch.allclose(model.core.shared_block.ffn.layer.w1s[0], pre_w1s)

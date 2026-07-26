@@ -40,7 +40,7 @@ class TiedMoE(nn.Module):
         if self.cfg.n_experts == 1:
             return self.layer(x)
         else:
-            # looped-moe MoELayer expects (x, loop_idx) and returns x
+            # looped-moe MoELayer expects (x, loop_idx) and returns (out, router_logits)
             # Since we set has_per_loop_routers=False, it uses the shared router
-            out = self.layer(x, loop_idx)
+            out, _ = self.layer(x, loop_idx)
             return out
