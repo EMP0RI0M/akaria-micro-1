@@ -31,7 +31,8 @@ class TiedMoE(nn.Module):
                 d_ff = cfg.expert_hidden_dim
                 n_experts = cfg.n_experts
                 experts_per_token = cfg.experts_per_token
-                has_per_loop_routers = False
+                top_k = cfg.experts_per_token
+                per_loop_routers = False
             
             self.layer = MoELayer(DummyConfig())
             
