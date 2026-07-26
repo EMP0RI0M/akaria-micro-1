@@ -14,7 +14,7 @@ def run_multiseed_ablation(configs, seeds=[42, 43, 44, 45, 46], batch_size=2, se
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("=== Multiseed Sweep ===")
     
-    results = {cfg_name: [] for cfg_name, _ in configs}
+    results = {f"{cfg_name}_{l_bar}": [] for cfg_name, l_bar in configs}
     
     for seed in seeds:
         print(f"\n--- Seed {seed} ---")
@@ -91,7 +91,8 @@ def run_multiseed_ablation(configs, seeds=[42, 43, 44, 45, 46], batch_size=2, se
             frac_sat = sat_steps / total_steps if total_steps > 0 else 0.0
             mean_bp = np.mean(barrier_pass_list) if barrier_pass_list else float('nan')
             
-            results[cfg_name].append({
+            unique_cfg = f"{cfg_name}_{l_bar}"
+            results[unique_cfg].append({
                 "loss": lm_loss_final,
                 "grad": grad_norm_final,
                 "mean_D": mean_D,
@@ -100,15 +101,21 @@ def run_multiseed_ablation(configs, seeds=[42, 43, 44, 45, 46], batch_size=2, se
                 "mean_bp": mean_bp,
                 "throughput": throughput
             })
-            print(f"{cfg_name:2s} | Loss: {lm_loss_final:.4f} | Grad: {grad_norm_final:6.2f} | Act: {frac_active:.2f} | Sat: {frac_sat:.2f}")
+            print(f"{cfg_name:2s} (λ={l_bar}) | Loss: {lm_loss_final:.4f} | Grad: {grad_norm_final:6.2f} | Act: {frac_active:.2f} | Sat: {frac_sat:.2f}")
+            
+            # Explicitly free GPU memory to prevent OOM across 30 model initializations
+            del model, optimizer, criterion, logits, loss, telemetry
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
     print("\n" + "="*80)
     print("FINAL MULTI-SEED AGGREGATES (Mean ± Std)")
     print(f"{'Mode':<5} | {'LM Loss':<15} | {'Grad Norm':<15} | {'D_t':<10} | {'% Active':<10} | {'% Sat':<10} | {'BP Rate':<10} | {'Tok/s'}")
     print("-" * 80)
     
-    for cfg_name, _ in configs:
-        runs = results[cfg_name]
+    for cfg_name, l_bar in configs:
+        unique_cfg = f"{cfg_name}_{l_bar}"
+        runs = results[unique_cfg]
         loss = [r["loss"] for r in runs]
         grad = [r["grad"] for r in runs]
         D = [r["mean_D"] for r in runs]
@@ -124,7 +131,7 @@ def run_multiseed_ablation(configs, seeds=[42, 43, 44, 45, 46], batch_size=2, se
         else:
             bp_str = "N/A"
             
-        print(f"{cfg_name:<5} | {np.mean(loss):.4f}±{np.std(loss):.4f} | {np.mean(grad):6.2f}±{np.std(grad):.2f} | {np.mean(D):.2f}±{np.std(D):.2f} | "
+        print(f"{cfg_name}({l_bar}) | {np.mean(loss):.4f}±{np.std(loss):.4f} | {np.mean(grad):6.2f}±{np.std(grad):.2f} | {np.mean(D):.2f}±{np.std(D):.2f} | "
               f"{np.mean(act):.2f}±{np.std(act):.2f} | {np.mean(sat):.2f}±{np.std(sat):.2f} | {bp_str:<10} | {np.mean(tps):.0f}")
 
 if __name__ == "__main__":
