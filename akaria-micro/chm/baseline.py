@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from chm.config import CHMConfig
 from chm.blocks import TransformerBlock
+from chm.init_utils import apply_weight_init
 
 class StandardTransformer(nn.Module):
     """
@@ -27,6 +28,8 @@ class StandardTransformer(nn.Module):
         
         self.norm_out = nn.LayerNorm(cfg.d_model)
         self.lm_head = nn.Linear(cfg.d_model, cfg.vocab_size, bias=False)
+        
+        apply_weight_init(self, std=0.02, num_residual_layers=num_layers)
         
         # Tie weights
         self.lm_head.weight = self.tok_emb.weight

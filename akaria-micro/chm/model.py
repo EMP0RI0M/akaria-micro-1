@@ -7,6 +7,7 @@ from chm.moe.tied_moe import TiedMoE
 from chm.recurrent.core import RecurrentCore
 from chm.hyperloop.hyper_connections import HyperConnections
 from chm.fluxvm.adapter import FluxVMLatentAdapter
+from chm.init_utils import apply_weight_init
 
 from chm.blocks import TransformerBlock
 
@@ -47,7 +48,13 @@ class ControlledHyperloopMoE(nn.Module):
         
         self.norm_out = RMSNorm(cfg.d_model)
         self.lm_head = nn.Linear(cfg.d_model, cfg.vocab_size, bias=False)
-        self.lm_head.weight = self.tok_emb.weight # Weight tying
+        
+        # Initialize weights
+        num_res_layers = cfg.prelude_layers + cfg.core_loops + cfg.coda_layers
+        apply_weight_init(self, std=0.02, num_residual_layers=num_res_layers)
+        
+        # Tie weights after init
+        self.lm_head.weight = self.tok_emb.weight
         
     def forward(self, input_ids: torch.Tensor):
         x = self.drop(self.tok_emb(input_ids))

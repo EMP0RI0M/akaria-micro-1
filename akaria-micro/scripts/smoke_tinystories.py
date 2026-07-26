@@ -62,8 +62,8 @@ def main():
         config_type="E"
     )
     
-    # 7-layer standard transformer gives ~12.7M parameters
-    baseline_model = StandardTransformer(chm_cfg, num_layers=7)
+    # 17-layer standard transformer gives ~33.22M parameters (vs 33.80M for CHM)
+    baseline_model = StandardTransformer(chm_cfg, num_layers=17)
     
     contestants = [
         ("Baseline", baseline_model),
@@ -96,10 +96,22 @@ def main():
         model.train()
         start_t = time.time()
         
+        # Hidden state hook
+        hidden_rms = []
+        def hook(module, inp, out):
+            hidden_rms.append(out.norm(dim=-1).mean().item())
+        h_hook = model.norm_out.register_forward_hook(hook)
+        
         # Forward
         logits, telemetry = model(x_train)
         assert not torch.isnan(logits).any(), f"{name} produced NaN in logits!"
+        h_hook.remove()
         
+        # Logit stats check (before backward)
+        with torch.no_grad():
+            print(f"  [Stats] Logits Mean: {logits.mean().item():.4f} | Std: {logits.std().item():.4f} | Min: {logits.min().item():.4f} | Max: {logits.max().item():.4f}")
+            print(f"  [Stats] Hidden RMS:  {hidden_rms[0]:.4f}")
+            
         # Loss
         lm_loss = criterion(logits.view(-1, vocab_size), y_train.view(-1))
         loss = lm_loss
@@ -112,9 +124,19 @@ def main():
         grad_norm = nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         
-        torch.cuda.synchronize() if torch.cuda.is_available() else None
-        elapsed = time.time() - start_t
-        tps = (batch_size * seq_len) / elapsed
+        # --- BENCHMARK (Warmup + Run) ---
+        if torch.cuda.is_available():
+            for _ in range(3):
+                _, _ = model(x_train)
+            torch.cuda.synchronize()
+            start_t = time.time()
+            for _ in range(5):
+                _, _ = model(x_train)
+            torch.cuda.synchronize()
+            elapsed = time.time() - start_t
+            tps = (5 * batch_size * seq_len) / elapsed
+        else:
+            tps = 0
         
         print(f"  [Train] Loss: {lm_loss.item():.4f} | Grad: {grad_norm.item():.4f} | Throughput: {tps:.0f} tok/s")
         
@@ -142,7 +164,7 @@ def main():
         ckpt_path = f"smoke_ckpt_{name}.pt"
         torch.save(model.state_dict(), ckpt_path)
         
-        model_clone = type(model)(model.cfg if hasattr(model, 'cfg') else chm_cfg, num_layers=7) if name == "Baseline" else type(model)(model.cfg)
+        model_clone = type(model)(model.cfg if hasattr(model, 'cfg') else chm_cfg, num_layers=17) if name == "Baseline" else type(model)(model.cfg)
         model_clone.load_state_dict(torch.load(ckpt_path, weights_only=True))
         os.remove(ckpt_path)
         print("  [Ckpt]  Save and restore successful.")
