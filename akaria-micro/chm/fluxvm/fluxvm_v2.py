@@ -83,7 +83,7 @@ class FluxVMControllerV2(nn.Module):
                 "I_t": torch.tensor(0.0, device=candidate.device), 
                 "V_after": V_prev, 
                 "delta_V": torch.tensor(0.0, device=candidate.device), 
-                "barrier_pass": torch.tensor(1.0, device=candidate.device), 
+                "barrier_pass": torch.tensor(float('nan'), device=candidate.device), 
                 "L_barrier": torch.tensor(0.0, device=candidate.device)
             })
             return candidate, telemetry
@@ -91,7 +91,7 @@ class FluxVMControllerV2(nn.Module):
         # --- 2. TRIGGER (CHM Adaptation of discrete branching) ---
         g_D = torch.relu(D_t - self.tau)
         
-        if ablation_mode in ['E3', 'E4']:
+        if ablation_mode in ['E3', 'E4', 'E5']:
             g_M = torch.relu(M_t - M_bar)
         else:
             g_M = torch.tensor(0.0, device=candidate.device)
@@ -101,12 +101,15 @@ class FluxVMControllerV2(nn.Module):
         # --- 3. CONTROL (Paper-derived PID) ---
         P_term = self.gamma_P * (D_t - self.tau)
         D_term = self.gamma_D * dD_t
-        I_term = self.gamma_I * J_t if ablation_mode != 'E2' else torch.tensor(0.0, device=candidate.device)
+        I_term = self.gamma_I * J_t if ablation_mode not in ['E2', 'E5'] else torch.tensor(0.0, device=candidate.device)
         
-        I_t = G_t * (P_term + I_term + D_term)
-        
-        # CHM Adaptation: Anti-windup. Clamp I_t to [0, 1] to prevent centroid overshoot and divergence explosion.
-        I_t = torch.clamp(I_t, min=0.0, max=1.0)
+        if ablation_mode == 'E5':
+            # E5 Ablation: Hard reset (no PID, just jump to 1.0 if triggered)
+            I_t = torch.where(G_t > 0, torch.tensor(1.0, device=candidate.device), torch.tensor(0.0, device=candidate.device))
+        else:
+            I_t = G_t * (P_term + I_term + D_term)
+            # CHM Adaptation: Anti-windup. Clamp I_t to [0, 1] to prevent centroid overshoot.
+            I_t = torch.clamp(I_t, min=0.0, max=1.0)
             
         # --- 4. MICRO-BARRIER (CHM Adaptation of Paper's strict clock-advance) ---
         x = candidate
