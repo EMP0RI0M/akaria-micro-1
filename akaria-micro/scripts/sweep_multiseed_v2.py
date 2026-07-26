@@ -67,21 +67,21 @@ def run_multiseed_ablation(configs, seeds=[42, 43, 44, 45, 46], batch_size=2, se
                 # Collect telemetry stats across all recurrent steps
                 if "D_t" in telemetry:
                     for d in telemetry["D_t"]:
-                        D_t_list.append(d.item())
+                        D_t_list.append(d)
                 if "G_t" in telemetry:
                     for g in telemetry["G_t"]:
-                        if g.item() > 0:
+                        if g > 0:
                             active_steps += 1
                         total_steps += 1
                 if "I_t" in telemetry:
                     for i_val in telemetry["I_t"]:
-                        if i_val.item() >= 0.999:
+                        if i_val >= 0.999:
                             sat_steps += 1
                 if "barrier_pass" in telemetry:
                     for bp in telemetry["barrier_pass"]:
                         # Skip NaNs from E0
-                        if not torch.isnan(bp):
-                            barrier_pass_list.append(bp.item())
+                        if not np.isnan(bp):
+                            barrier_pass_list.append(bp)
                             
             throughput = (batch_size * seq_len * steps) / (time.time() - start_time)
             
