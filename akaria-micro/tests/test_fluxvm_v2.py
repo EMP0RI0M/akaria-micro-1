@@ -104,3 +104,46 @@ def test_e1_reproduces_old_controller():
     
     assert out.shape == x.shape
     assert 'beta' in metrics
+
+def test_e5_hard_reset_semantics():
+    # 1. E5 computes D_t and M_t (via telemetry)
+    # 2. E5 computes same G_t as E3
+    # 3. When G_t > 0, E5 I_t == 1
+    # 4. When G_t == 0, E5 I_t == 0
+    # 5. E5 modifies candidate when triggered
+    # 6. E5 output differs from E0 on unstable input
+    # 7. E5 telemetry is populated
+    
+    ctrl_e3 = FluxVMControllerV2(tau=0.0, K=2)
+    ctrl_e5 = FluxVMControllerV2(tau=0.0, K=1) # E5 operates with 1 microstep
+    ctrl_e0 = FluxVMControllerV2(tau=0.0, K=1)
+    
+    # Highly divergent tensor to trigger intervention
+    x = torch.randn(2, 4, 16) * 10
+    
+    out_e3, tel_e3 = ctrl_e3(x.clone(), ablation_mode='E3')
+    out_e5, tel_e5 = ctrl_e5(x.clone(), ablation_mode='E5')
+    out_e0, tel_e0 = ctrl_e0(x.clone(), ablation_mode='E0')
+    
+    # 1. & 7. Computes and populates telemetry correctly
+    assert tel_e5["D_t"].item() > 0
+    assert "M_t" in tel_e5
+    
+    # 2. E5 computes same G_t as E3 for identical inputs
+    assert torch.isclose(tel_e5["G_t"], tel_e3["G_t"])
+    
+    # 3. G_t > 0 -> I_t == 1
+    assert tel_e5["G_t"].item() > 0
+    assert tel_e5["I_t"].item() == 1.0
+    
+    # 5. & 6. E5 modifies candidate and differs from E0
+    assert not torch.allclose(out_e5, x)
+    assert not torch.allclose(out_e5, out_e0)
+    
+    # 4. When G_t == 0 -> I_t == 0
+    ctrl_stable = FluxVMControllerV2(tau=100.0, K=1) # High tau -> no trigger
+    x_stable = torch.ones(2, 4, 16)
+    out_stable, tel_stable = ctrl_stable(x_stable, ablation_mode='E5')
+    assert tel_stable["G_t"].item() == 0.0
+    assert tel_stable["I_t"].item() == 0.0
+    assert torch.allclose(out_stable, x_stable)
