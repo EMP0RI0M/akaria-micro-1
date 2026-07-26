@@ -276,8 +276,21 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
                 "best_val_ce": best_val_ce,
                 "best_val_ppl": best_val_ppl,
             }
-            torch.save(ckpt, f"ckpt_{name}_step{global_step}.pt")
-            torch.save(ckpt, latest_ckpt_path)
+            tmp_latest = f"{latest_ckpt_path}.tmp"
+            torch.save(ckpt, tmp_latest)
+            os.replace(tmp_latest, latest_ckpt_path)
+            
+            # Save best if it improved
+            if val_loss == best_val_ce:
+                tmp_best = f"ckpt_{name}_best.pt.tmp"
+                torch.save(ckpt, tmp_best)
+                os.replace(tmp_best, f"ckpt_{name}_best.pt")
+                
+            # If final step, save final
+            if global_step == total_steps - 1:
+                tmp_final = f"ckpt_{name}_final.pt.tmp"
+                torch.save(ckpt, tmp_final)
+                os.replace(tmp_final, f"ckpt_{name}_final.pt")
             
         elif global_step % ckpt_interval == 0 and global_step != 0:
             # Save intermediate resumable checkpoint without full eval
@@ -292,7 +305,9 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
                 "best_val_ce": best_val_ce,
                 "best_val_ppl": best_val_ppl,
             }
-            torch.save(ckpt, latest_ckpt_path)
+            tmp_latest = f"{latest_ckpt_path}.tmp"
+            torch.save(ckpt, tmp_latest)
+            os.replace(tmp_latest, latest_ckpt_path)
             
         global_step += 1
         
@@ -319,6 +334,12 @@ def main():
         choices=[0, 1],
         default=None,
         help="Run a subset of contestants for dual-GPU parallel training"
+    )
+    parser.add_argument(
+        "--contestant",
+        type=str,
+        default=None,
+        help="Run a specific contestant by name (e.g. E0, Baseline)"
     )
     args = parser.parse_args()
     
@@ -401,7 +422,12 @@ def main():
         )),
     ]
     
-    if args.group == 0:
+    if args.contestant is not None:
+        contestants = [c for c in all_contestants if c[0] == args.contestant]
+        if not contestants:
+            print(f"Error: Contestant '{args.contestant}' not found.")
+            sys.exit(1)
+    elif args.group == 0:
         contestants = [all_contestants[i] for i in [0, 2, 4]]
     elif args.group == 1:
         contestants = [all_contestants[i] for i in [1, 3]]
