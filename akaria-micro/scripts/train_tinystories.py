@@ -78,13 +78,29 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
     criterion = nn.CrossEntropyLoss(ignore_index=-100)
     
     log_file = f"metrics_{name}.csv"
-    with open(log_file, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["Step", "Train_Loss", "Val_Loss", "Val_PPL", "Tok_Sec", "D_t", "G_t_Act", "I_t_Sat"])
-        
+    
     global_step = 0
     tokens_processed = 0
     
+    latest_ckpt_path = f"ckpt_latest_{name}.pt"
+    if os.path.exists(latest_ckpt_path):
+        print(f"[{name}] Found existing checkpoint {latest_ckpt_path}. Resuming...")
+        ckpt = torch.load(latest_ckpt_path, map_location=device, weights_only=True)
+        model.load_state_dict(ckpt["model_state_dict"])
+        optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+        scheduler.load_state_dict(ckpt["scheduler_state_dict"])
+        global_step = ckpt["step"]
+        print(f"[{name}] Resumed from step {global_step}.")
+        # We append to the log file instead of overwriting
+        log_mode = "a"
+    else:
+        log_mode = "w"
+
+    with open(log_file, log_mode, newline="") as f:
+        writer = csv.writer(f)
+        if log_mode == "w":
+            writer.writerow(["Step", "Train_Loss", "Val_Loss", "Val_PPL", "Tok_Sec", "D_t", "G_t_Act", "I_t_Sat"])
+        
     train_iter = iter(train_loader)
     
     while global_step < total_steps:
@@ -199,6 +215,17 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
                 "scheduler_state_dict": scheduler.state_dict(),
             }
             torch.save(ckpt, f"ckpt_{name}_step{global_step}.pt")
+            torch.save(ckpt, latest_ckpt_path)
+            
+        elif global_step % 250 == 0 and global_step != 0:
+            # Save intermediate resumable checkpoint without full eval
+            ckpt = {
+                "step": global_step,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "scheduler_state_dict": scheduler.state_dict(),
+            }
+            torch.save(ckpt, latest_ckpt_path)
             
         global_step += 1
         
