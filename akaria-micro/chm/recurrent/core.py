@@ -47,13 +47,26 @@ class RecurrentCore(nn.Module):
                 Y = H_tilde
 
             if self.flux_adapter is not None:
-                Y_damped, prev_memory, metrics = self.flux_adapter(Y, t, prev_memory)
-                Y = Y_damped
+                from chm.fluxvm.fluxvm_v2 import FluxVMControllerV2
+                if isinstance(self.flux_adapter, FluxVMControllerV2):
+                    Y_damped, L_barrier, barrier_pass = self.flux_adapter(
+                        Y,
+                        ablation_mode=self.cfg.flux_mode,
+                        lambda_barrier=self.cfg.lambda_barrier
+                    )
+                    Y = Y_damped
+                    metrics = {"L_barrier": L_barrier, "barrier_pass": barrier_pass}
+                else:
+                    Y_damped, prev_memory, metrics = self.flux_adapter(Y, t, prev_memory)
+                    Y = Y_damped
                 
                 for k, v in metrics.items():
                     if k not in telemetry:
                         telemetry[k] = []
-                    telemetry[k].append(v.mean().item() if isinstance(v, torch.Tensor) else v)
+                    if k == "L_barrier":
+                        telemetry[k].append(v)
+                    else:
+                        telemetry[k].append(v.mean().item() if isinstance(v, torch.Tensor) else v)
 
         if self.hyper_connections is not None:
             H_out = Y.mean(dim=2)

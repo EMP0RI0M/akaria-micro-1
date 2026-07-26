@@ -27,9 +27,17 @@ class CHMConfig:
     # FluxVM
     flux_mode: str = "OFF"
     tau: float = 1.0
-    alpha: float = 0.1
+    alpha: float = 0.9
     gamma: float = 0.9
     k: float = 2.5
+    
+    # FluxVM V2 Parameters
+    gamma_P: float = 0.1
+    gamma_I: float = 0.01
+    gamma_D: float = 0.05
+    buffer_size: int = 20
+    K: int = 2
+    lambda_barrier: float = 0.1
 
     # Sequence
     sequence_length: int = 512
