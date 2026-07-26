@@ -313,6 +313,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--pilot", action="store_true", help="Run 50 step short pilot mode")
     parser.add_argument("--medium", action="store_true", help="Run 500 step medium mode")
+    parser.add_argument(
+        "--group",
+        type=int,
+        choices=[0, 1],
+        default=None,
+        help="Run a subset of contestants for dual-GPU parallel training"
+    )
     args = parser.parse_args()
     
     if args.pilot:
@@ -374,13 +381,34 @@ def main():
         sequence_length=256, config_type="E"
     )
     
-    contestants = [
+    all_contestants = [
         ("Baseline", lambda: StandardTransformer(chm_cfg, num_layers=17)),
-        ("E0", lambda: ControlledHyperloopMoE(CHMConfig(**{**chm_cfg.__dict__, "flux_mode": "E0"}))),
-        ("E3", lambda: ControlledHyperloopMoE(CHMConfig(**{**chm_cfg.__dict__, "flux_mode": "E3"}))),
-        ("E4_0.1", lambda: ControlledHyperloopMoE(CHMConfig(**{**chm_cfg.__dict__, "flux_mode": "E4", "lambda_barrier": 0.1}))),
-        ("E5", lambda: ControlledHyperloopMoE(CHMConfig(**{**chm_cfg.__dict__, "flux_mode": "E5"}))),
+        ("E0", lambda: ControlledHyperloopMoE(
+            CHMConfig(**{**chm_cfg.__dict__, "flux_mode": "E0"})
+        )),
+        ("E3", lambda: ControlledHyperloopMoE(
+            CHMConfig(**{**chm_cfg.__dict__, "flux_mode": "E3"})
+        )),
+        ("E4_0.1", lambda: ControlledHyperloopMoE(
+            CHMConfig(**{
+                **chm_cfg.__dict__,
+                "flux_mode": "E4",
+                "lambda_barrier": 0.1
+            })
+        )),
+        ("E5", lambda: ControlledHyperloopMoE(
+            CHMConfig(**{**chm_cfg.__dict__, "flux_mode": "E5"})
+        )),
     ]
+    
+    if args.group == 0:
+        contestants = [all_contestants[i] for i in [0, 2, 4]]
+    elif args.group == 1:
+        contestants = [all_contestants[i] for i in [1, 3]]
+    else:
+        contestants = all_contestants
+
+    print("Contestants:", [name for name, _ in contestants])
     
     results = {}
     for name, model_fn in contestants:
