@@ -51,6 +51,8 @@ class RecurrentCore(nn.Module):
                 Y = Y_damped
                 
                 for k, v in metrics.items():
+                    if k not in telemetry:
+                        telemetry[k] = []
                     telemetry[k].append(v.mean().item() if isinstance(v, torch.Tensor) else v)
 
         if self.hyper_connections is not None:
