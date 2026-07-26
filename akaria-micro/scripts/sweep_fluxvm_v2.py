@@ -51,7 +51,9 @@ def run_v2_ablation(cfg: CHMConfig, batch_size=2, seq_len=32, steps=10):
             
             # Print detailed telemetry for the final step
             keys_to_print = ["D_t", "D_prev", "delta_D", "M_t", "historical_M", "g_D", "g_M", "G_t", 
-                             "P_term", "I_term", "D_term", "I_t", "V_before", "V_after", "delta_V"]
+                             "P_term", "I_term", "D_term", "I_t", "V_reference", 
+                             "V_candidate_before_control", "V_candidate_after_control", 
+                             "delta_V_control", "delta_V_temporal"]
             for k in keys_to_print:
                 if k in telemetry and telemetry[k]:
                     print(f"  {k}: {[f'{v:.4f}' for v in telemetry[k]]}")

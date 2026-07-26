@@ -71,24 +71,18 @@ def test_vx_and_delta_v_numerically_correct():
     
     # Step 1
     out1, telemetry1 = ctrl(x, ablation_mode='E4', lambda_barrier=0.1)
-    D1 = ctrl.D_prev
-    M1 = ctrl.M_prev
-    V1 = 0.5 * D1**2 + 0.5 * M1**2
-    loss1 = telemetry1["L_barrier"]
     
     # Step 2
     x2 = torch.randn(2, 4, 16)
     out2, telemetry2 = ctrl(x2, ablation_mode='E4', lambda_barrier=0.1)
-    D2 = ctrl.D_prev
-    M2 = ctrl.M_prev
-    V2 = 0.5 * D2**2 + 0.5 * M2**2
+    
+    delta_V_temporal = telemetry2["delta_V_temporal"]
     loss2 = telemetry2["L_barrier"]
     
-    delta_V = V2 - V1
     # Check if delta_V is passed properly
-    # If delta_V > 0, L_barrier > 0 (if lambda_barrier=0.1)
-    if delta_V > 0:
-        assert torch.isclose(loss2, torch.tensor(0.1) * delta_V)
+    # If delta_V_temporal > 0, L_barrier > 0 (if lambda_barrier=0.1)
+    if delta_V_temporal > 0:
+        assert torch.isclose(loss2, torch.tensor(0.1) * delta_V_temporal)
     else:
         assert loss2 == 0.0
 

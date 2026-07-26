@@ -29,6 +29,7 @@ class FluxVMControllerV2(nn.Module):
         self.D_prev = 0.0
         self.M_prev = 0.0
         self.J_prev = 0.0  # Integral of M
+        self.V_prev = 0.0  # V_committed(t-1)
         self.history_M.clear()
         
     def _compute_divergence(self, h):
@@ -46,6 +47,7 @@ class FluxVMControllerV2(nn.Module):
             self.D_prev = torch.tensor(0.0, device=candidate.device)
             self.M_prev = torch.tensor(0.0, device=candidate.device)
             self.J_prev = torch.tensor(0.0, device=candidate.device)
+            self.V_prev = torch.tensor(0.0, device=candidate.device)
 
         # --- 1. PROBE (Paper-derived) ---
         D_t = self._compute_divergence(candidate)
@@ -63,16 +65,18 @@ class FluxVMControllerV2(nn.Module):
         else:
             M_bar = M_t.item()
             
-        V_prev = 0.5 * (self.D_prev**2) + 0.5 * (self.M_prev**2)
+        V_reference = self.V_prev
+        V_candidate_before_control = 0.5 * (D_t**2) + 0.5 * (M_t**2)
         
         telemetry = {
             "D_t": D_t, "D_prev": self.D_prev, "delta_D": dD_t,
             "M_t": M_t, "historical_M": torch.tensor(M_bar, device=D_t.device),
-            "V_before": V_prev
+            "V_reference": V_reference,
+            "V_candidate_before_control": V_candidate_before_control
         }
         
         if ablation_mode == 'E0':
-            self._update_state(D_t, M_t, J_t)
+            self._update_state(D_t, M_t, J_t, V_candidate_before_control)
             telemetry.update({
                 "g_D": torch.tensor(0.0, device=candidate.device), 
                 "g_M": torch.tensor(0.0, device=candidate.device), 
@@ -81,8 +85,9 @@ class FluxVMControllerV2(nn.Module):
                 "I_term": torch.tensor(0.0, device=candidate.device), 
                 "D_term": torch.tensor(0.0, device=candidate.device),
                 "I_t": torch.tensor(0.0, device=candidate.device), 
-                "V_after": V_prev, 
-                "delta_V": torch.tensor(0.0, device=candidate.device), 
+                "V_candidate_after_control": V_candidate_before_control,
+                "delta_V_control": torch.tensor(0.0, device=candidate.device),
+                "delta_V_temporal": V_candidate_before_control - V_reference,
                 "barrier_pass": torch.tensor(float('nan'), device=candidate.device), 
                 "L_barrier": torch.tensor(0.0, device=candidate.device)
             })
@@ -127,29 +132,34 @@ class FluxVMControllerV2(nn.Module):
             
         # --- 5. COMMIT & ACCEPTANCE (Paper-derived V(X) barrier) ---
         D_final = self._compute_divergence(x)
-        V_corrected = 0.5 * (D_final**2) + 0.5 * (M_t**2)
-        delta_V = V_corrected - V_prev
+        V_candidate_after_control = 0.5 * (D_final**2) + 0.5 * (M_t**2)
         
-        # Verify barrier_pass semantics: only pass if V reduced AND D_final <= tau (state is not pathological)
-        barrier_pass = ((delta_V < 0) & (D_final <= self.tau)).float()
+        delta_V_control = V_candidate_after_control - V_candidate_before_control
+        delta_V_temporal = V_candidate_after_control - V_reference
         
-        L_barrier = lambda_barrier * torch.relu(delta_V) if ablation_mode == 'E4' else torch.tensor(0.0, device=candidate.device)
+        # Verify barrier_pass semantics: only pass if V reduced relative to reference AND D_final <= tau
+        barrier_pass = ((delta_V_temporal < 0) & (D_final <= self.tau)).float()
+        
+        L_barrier = lambda_barrier * torch.relu(delta_V_temporal) if ablation_mode in ['E4', 'E5'] else torch.tensor(0.0, device=candidate.device)
         
         # Populate detailed telemetry
         telemetry.update({
             "g_D": g_D, "g_M": g_M, "G_t": G_t,
             "P_term": P_term, "I_term": I_term, "D_term": D_term, "I_t": I_t,
-            "V_after": V_corrected, "delta_V": delta_V,
+            "V_candidate_after_control": V_candidate_after_control, 
+            "delta_V_control": delta_V_control,
+            "delta_V_temporal": delta_V_temporal,
             "barrier_pass": barrier_pass, "L_barrier": L_barrier
         })
         
         # --- 6. UPDATE RECURRENT CONTROLLER STATE ---
-        self._update_state(D_t, M_t, J_t)
+        self._update_state(D_t, M_t, J_t, V_candidate_after_control)
         
         return x, telemetry
         
-    def _update_state(self, D_t, M_t, J_t):
+    def _update_state(self, D_t, M_t, J_t, V_committed):
         self.D_prev = D_t.detach()
         self.M_prev = M_t.detach()
         self.J_prev = J_t.detach()
+        self.V_prev = V_committed.detach()
         self.history_M.append(self.M_prev.item())
