@@ -25,7 +25,7 @@ class ControlledHyperloopMoE(nn.Module):
         hyper_connections = HyperConnections(cfg) if cfg.n_streams > 1 else None
         if cfg.flux_mode == "E1":
             flux_adapter = FluxVMLatentAdapter(cfg)
-        elif cfg.flux_mode in ["E0", "E2", "E3", "E4"]:
+        elif cfg.flux_mode in ["E0", "E2", "E3", "E4", "E5"]:
             from chm.fluxvm.fluxvm_v2 import FluxVMControllerV2
             flux_adapter = FluxVMControllerV2(
                 tau=cfg.tau,
