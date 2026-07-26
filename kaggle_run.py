@@ -33,3 +33,6 @@ run_cmd([sys.executable, "-m", "pytest", "-v", "tests/test_parameter_tying.py"],
 
 print("\n=== 4. Running A-E Ablation Harness ===")
 run_cmd([sys.executable, "scripts/run_ablations.py"], env=env, cwd=cwd)
+
+print("\n=== 5. Sweeping FluxVM Controller ===")
+run_cmd([sys.executable, "scripts/sweep_fluxvm.py"], env=env, cwd=cwd)
