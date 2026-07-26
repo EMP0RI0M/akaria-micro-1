@@ -49,7 +49,13 @@ class CHMConfig:
         if self.n_kv_heads is None:
             self.n_kv_heads = self.n_heads
 
-        if self.config_type == "A":
+        if self.config_type == "E":
+            self.n_streams = 4
+            self.n_experts = 8
+            self.experts_per_token = 2
+            if self.flux_mode == "OFF":
+                self.flux_mode = "OBSERVE"
+        elif self.config_type == "A":
             self.n_streams = 1
             self.n_experts = 1
             self.flux_mode = "OFF"
@@ -66,9 +72,3 @@ class CHMConfig:
             self.n_experts = 8
             self.experts_per_token = 2
             self.flux_mode = "OFF"
-        elif self.config_type == "E":
-            self.n_streams = 4
-            self.n_experts = 8
-            self.experts_per_token = 2
-            if self.flux_mode == "OFF":
-                self.flux_mode = "OBSERVE"

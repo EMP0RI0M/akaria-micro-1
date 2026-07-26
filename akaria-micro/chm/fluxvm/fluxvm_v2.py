@@ -34,21 +34,13 @@ class FluxVMControllerV2(nn.Module):
     def _compute_divergence(self, h):
         """
         Paper-derived: D(t) = (1/N) * sum_i || x_i - x_bar ||^2
-        CHM adaptation: Variance across the last dimension as a proxy for feature divergence.
+        CHM adaptation: Variance across the stream dimension (dim=2) to measure expert/stream divergence.
         """
-        # CHM Adaptation: using variance across the embedding dimension as divergence proxy.
+        if h.dim() == 4:
+            return h.var(dim=2, unbiased=False).mean()
         return h.var(dim=-1).mean()
         
     def forward(self, candidate, ablation_mode='E4', lambda_barrier=0.1):
-        """
-        candidate: the representation from the recurrent block (h_t -> candidate)
-        ablation_mode: 
-            'E0' = Observe (no control)
-            'E2' = P/D + threshold (no memory trigger/integral)
-            'E3' = MAAC/PID + memory trigger (no iterative barrier)
-            'E4' = MAAC/PID + fixed-K barrier
-        (Note: E1 is the old exponential controller and would be tested via the V1 adapter).
-        """
         # Ensure D_prev is on correct device
         if isinstance(self.D_prev, float):
             self.D_prev = torch.tensor(0.0, device=candidate.device)
@@ -58,7 +50,7 @@ class FluxVMControllerV2(nn.Module):
         # --- 1. PROBE (Paper-derived) ---
         D_t = self._compute_divergence(candidate)
         
-        # MAAC Memory Dynamics (Paper Eq: M_t = alpha * M_prev + (1-alpha) * D_t)
+        # MAAC Memory Dynamics
         M_t = self.alpha * self.M_prev + (1 - self.alpha) * D_t
         # Integral of memory (CHM adaptation of continuous integral)
         J_t = self.J_prev + M_t
@@ -73,9 +65,19 @@ class FluxVMControllerV2(nn.Module):
             
         V_prev = 0.5 * (self.D_prev**2) + 0.5 * (self.M_prev**2)
         
+        telemetry = {
+            "D_t": D_t, "D_prev": self.D_prev, "delta_D": dD_t,
+            "M_t": M_t, "historical_M": torch.tensor(M_bar, device=D_t.device),
+            "V_before": V_prev
+        }
+        
         if ablation_mode == 'E0':
             self._update_state(D_t, M_t, J_t)
-            return candidate, torch.tensor(0.0, device=candidate.device), torch.tensor(1.0, device=candidate.device)
+            telemetry.update({
+                "g_D": 0.0, "g_M": 0.0, "G_t": 0.0, "P_term": 0.0, "I_term": 0.0, "D_term": 0.0,
+                "I_t": 0.0, "V_after": V_prev, "delta_V": 0.0, "barrier_pass": 1.0, "L_barrier": 0.0
+            })
+            return candidate, telemetry
             
         # --- 2. TRIGGER (CHM Adaptation of discrete branching) ---
         g_D = torch.relu(D_t - self.tau)
@@ -85,49 +87,54 @@ class FluxVMControllerV2(nn.Module):
         else:
             g_M = torch.tensor(0.0, device=candidate.device)
             
-        # Differentiable gate: non-zero if either trigger is active
-        # This preserves the rule: stable state => controller does nothing.
         G_t = torch.tanh(g_D + g_M) 
         
         # --- 3. CONTROL (Paper-derived PID) ---
-        if ablation_mode == 'E2':
-            # P/D + threshold
-            I_t = G_t * (self.gamma_P * (D_t - self.tau) + self.gamma_D * dD_t)
-        else:
-            # MAAC/PID
-            I_t = G_t * (self.gamma_P * (D_t - self.tau) + self.gamma_I * J_t + self.gamma_D * dD_t)
+        P_term = self.gamma_P * (D_t - self.tau)
+        D_term = self.gamma_D * dD_t
+        I_term = self.gamma_I * J_t if ablation_mode != 'E2' else torch.tensor(0.0, device=candidate.device)
+        
+        I_t = G_t * (P_term + I_term + D_term)
+        
+        # CHM Adaptation: Anti-windup. Clamp I_t to [0, 1] to prevent centroid overshoot and divergence explosion.
+        I_t = torch.clamp(I_t, min=0.0, max=1.0)
             
         # --- 4. MICRO-BARRIER (CHM Adaptation of Paper's strict clock-advance) ---
         x = candidate
         K_steps = self.K if ablation_mode == 'E4' else 1
         
         for k in range(K_steps):
-            # Do NOT advance M/J/history here (Paper constraint).
-            
-            # CHM Adaptation: centroid correction operator (pull towards mean)
-            x_mean = x.mean(dim=-1, keepdim=True)
+            # CHM Adaptation: centroid correction operator across streams
+            if x.dim() == 4:
+                x_mean = x.mean(dim=2, keepdim=True)
+            else:
+                x_mean = x.mean(dim=-1, keepdim=True)
+                
             correction = - (x - x_mean)
-            
-            # Differentiable intervention
-            x_new = x + I_t * correction
-            
-            x = x_new
+            x = x + I_t * correction
             
         # --- 5. COMMIT & ACCEPTANCE (Paper-derived V(X) barrier) ---
         D_final = self._compute_divergence(x)
-        # Note: Paper says V(X) = 0.5 D^2 + 0.5 M^2. 
         V_corrected = 0.5 * (D_final**2) + 0.5 * (M_t**2)
-        
         delta_V = V_corrected - V_prev
-        barrier_pass = (delta_V < 0).float()
         
-        # CHM Adaptation: Auxiliary loss to encourage passing the barrier
+        # Verify barrier_pass semantics: only pass if V reduced AND D_final <= tau (state is not pathological)
+        barrier_pass = ((delta_V < 0) & (D_final <= self.tau)).float()
+        
         L_barrier = lambda_barrier * torch.relu(delta_V) if ablation_mode == 'E4' else torch.tensor(0.0, device=candidate.device)
+        
+        # Populate detailed telemetry
+        telemetry.update({
+            "g_D": g_D, "g_M": g_M, "G_t": G_t,
+            "P_term": P_term, "I_term": I_term, "D_term": D_term, "I_t": I_t,
+            "V_after": V_corrected, "delta_V": delta_V,
+            "barrier_pass": barrier_pass, "L_barrier": L_barrier
+        })
         
         # --- 6. UPDATE RECURRENT CONTROLLER STATE ---
         self._update_state(D_t, M_t, J_t)
         
-        return x, L_barrier, barrier_pass
+        return x, telemetry
         
     def _update_state(self, D_t, M_t, J_t):
         self.D_prev = D_t.detach()

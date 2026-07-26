@@ -49,13 +49,13 @@ class RecurrentCore(nn.Module):
             if self.flux_adapter is not None:
                 from chm.fluxvm.fluxvm_v2 import FluxVMControllerV2
                 if isinstance(self.flux_adapter, FluxVMControllerV2):
-                    Y_damped, L_barrier, barrier_pass = self.flux_adapter(
+                    Y_damped, v2_telemetry = self.flux_adapter(
                         Y,
                         ablation_mode=self.cfg.flux_mode,
                         lambda_barrier=self.cfg.lambda_barrier
                     )
                     Y = Y_damped
-                    metrics = {"L_barrier": L_barrier, "barrier_pass": barrier_pass}
+                    metrics = v2_telemetry
                 else:
                     Y_damped, prev_memory, metrics = self.flux_adapter(Y, t, prev_memory)
                     Y = Y_damped

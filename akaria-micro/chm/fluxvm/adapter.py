@@ -66,7 +66,7 @@ class FluxVMLatentAdapter(nn.Module):
         metrics["M"] = current_memory
         metrics["beta"] = beta
 
-        if self.mode == "CONTROL":
+        if self.mode in ["CONTROL", "E1"]:
             if Y.dim() == 4:
                 beta_broadcast = beta.view(B, 1, 1, 1)
                 centroid = Y.mean(dim=(1, 2), keepdim=True)

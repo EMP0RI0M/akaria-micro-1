@@ -4,7 +4,6 @@ import time
 import sys
 import os
 
-# Add akaria-micro path if running directly
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from chm.config import CHMConfig
@@ -17,7 +16,6 @@ def run_v2_ablation(cfg: CHMConfig, batch_size=2, seq_len=32, steps=10):
     model = ControlledHyperloopMoE(cfg).to(device)
     total_params = sum(p.numel() for p in model.parameters())
     
-    # Tiny synthetic overfit
     x = torch.randint(0, cfg.vocab_size, (batch_size, seq_len)).to(device)
     y = torch.randint(0, cfg.vocab_size, (batch_size, seq_len)).to(device)
     criterion = nn.CrossEntropyLoss()
@@ -29,12 +27,14 @@ def run_v2_ablation(cfg: CHMConfig, batch_size=2, seq_len=32, steps=10):
     for step in range(steps):
         optimizer.zero_grad()
         logits, telemetry = model(x)
-        loss = criterion(logits.view(-1, cfg.vocab_size), y.view(-1))
+        lm_loss = criterion(logits.view(-1, cfg.vocab_size), y.view(-1))
         
-        # Add auxiliary barrier loss if present
+        loss = lm_loss
+        L_b_val = 0.0
         if "L_barrier" in telemetry and telemetry["L_barrier"]:
             L_b = torch.stack(telemetry["L_barrier"]).sum()
             loss = loss + L_b
+            L_b_val = L_b.item()
             
         loss.backward()
         
@@ -44,10 +44,17 @@ def run_v2_ablation(cfg: CHMConfig, batch_size=2, seq_len=32, steps=10):
         if step == steps - 1:
             print(f"--- FluxMode: {cfg.flux_mode} | lambda_barrier: {cfg.lambda_barrier} ---")
             print(f"Total Params: {total_params / 1e6:.2f}M")
-            print(f"Final Loss: {loss.item():.4f} | Grad Norm: {grad_norm.item():.4f}")
+            print(f"LM Loss: {lm_loss.item():.4f} | Barrier Loss: {L_b_val:.4f} | Total Loss: {loss.item():.4f} | Grad Norm: {grad_norm.item():.4f}")
             if "barrier_pass" in telemetry and telemetry["barrier_pass"]:
                 bp_mean = sum(telemetry["barrier_pass"]) / len(telemetry["barrier_pass"])
                 print(f"Barrier Pass Rate: {bp_mean:.4f}")
+            
+            # Print detailed telemetry for the final step
+            keys_to_print = ["D_t", "D_prev", "delta_D", "M_t", "historical_M", "g_D", "g_M", "G_t", 
+                             "P_term", "I_term", "D_term", "I_t", "V_before", "V_after", "delta_V"]
+            for k in keys_to_print:
+                if k in telemetry and telemetry[k]:
+                    print(f"  {k}: {[f'{v:.4f}' for v in telemetry[k]]}")
             
     throughput = (batch_size * seq_len * steps) / (time.time() - start_time)
     print(f"Throughput: {throughput:.2f} tok/s")
