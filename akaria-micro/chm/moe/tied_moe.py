@@ -9,8 +9,9 @@ from chm.dense_ffn import DenseSwiGLU
 try:
     from model import MoELayer
 except ImportError:
-    # Fallback for local sandbox testing structure
+    # Fallback for local sandbox testing structure and Kaggle
     sys.path.append(os.path.abspath('/root/looped-moe'))
+    sys.path.append(os.path.abspath('/kaggle/working/looped-moe'))
     from model import MoELayer
 
 class TiedMoE(nn.Module):
