@@ -61,7 +61,7 @@ def generate_samples(model, tokenizer, device, prompts=["Once upon a time", "A l
         results.append(output_text)
     return results
 
-def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device, total_steps, eval_interval):
+def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device, total_steps, eval_interval, print_interval, ckpt_interval):
     print(f"\n{'='*80}\nStarting Training for {name}\n{'='*80}")
     set_seed(42) # Ensure fair initialization
     model = model_fn().to(device)
@@ -81,6 +81,12 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
     
     global_step = 0
     tokens_processed = 0
+    total_train_time = 0.0
+    best_val_ce = float('inf')
+    best_val_ppl = float('inf')
+    final_val_ce = float('inf')
+    final_val_ppl = float('inf')
+    avg_tps = 0.0
     
     latest_ckpt_path = f"ckpt_latest_{name}.pt"
     if os.path.exists(latest_ckpt_path):
@@ -90,8 +96,17 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
         optimizer.load_state_dict(ckpt["optimizer_state_dict"])
         scheduler.load_state_dict(ckpt["scheduler_state_dict"])
         global_step = ckpt["step"]
+        if "cpu_rng_state" in ckpt:
+            torch.set_rng_state(ckpt["cpu_rng_state"])
+        if "cuda_rng_state" in ckpt and torch.cuda.is_available():
+            torch.cuda.set_rng_state(ckpt["cuda_rng_state"])
+        if "total_train_time" in ckpt:
+            total_train_time = ckpt["total_train_time"]
+        if "best_val_ce" in ckpt:
+            best_val_ce = ckpt["best_val_ce"]
+            best_val_ppl = ckpt["best_val_ppl"]
+            
         print(f"[{name}] Resumed from step {global_step}.")
-        # We append to the log file instead of overwriting
         log_mode = "a"
     else:
         log_mode = "w"
@@ -101,7 +116,19 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
         if log_mode == "w":
             writer.writerow(["Step", "Train_Loss", "Val_Loss", "Val_PPL", "Tok_Sec", "D_t", "G_t_Act", "I_t_Sat"])
         
+    # Set seed BEFORE dataloader iter to ensure exact same sequence
+    set_seed(42)
     train_iter = iter(train_loader)
+    
+    # Fast-forward dataloader to global_step to perfectly preserve batch ordering
+    if global_step > 0:
+        print(f"[{name}] Fast-forwarding dataloader by {global_step} batches to preserve exact sequence...")
+        for _ in range(global_step):
+            try:
+                next(train_iter)
+            except StopIteration:
+                train_iter = iter(train_loader)
+                next(train_iter)
     
     while global_step < total_steps:
         model.train()
@@ -152,9 +179,12 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
         # Count non-padded tokens
         valid_tokens = (y_train != -100).sum().item()
         tokens_processed += valid_tokens
-        tps = valid_tokens / max((time.time() - step_start), 1e-6)
+        step_elapsed = time.time() - step_start
+        total_train_time += step_elapsed
+        tps = valid_tokens / max(step_elapsed, 1e-6)
+        avg_tps = (avg_tps * (global_step - ckpt.get('step', 0) if 'ckpt' in locals() else global_step) + tps) / (global_step - ckpt.get('step', 0) + 1 if 'ckpt' in locals() else global_step + 1)
         
-        if global_step % 50 == 0 and global_step != 0:
+        if global_step % print_interval == 0 and global_step != 0:
             current_lr = scheduler.get_last_lr()[0]
             print(f"[{name}] Step {global_step}/{total_steps} | LM Loss: {lm_loss.item():.4f} | LR: {current_lr:.2e} | Tok/s: {tps:.0f}")
         
@@ -178,6 +208,12 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
             
             val_loss = val_loss_sum / max(val_batches, 1)
             val_ppl = math.exp(min(val_loss, 20)) # Cap at e^20 for reporting
+            
+            final_val_ce = val_loss
+            final_val_ppl = val_ppl
+            if val_loss < best_val_ce:
+                best_val_ce = val_loss
+                best_val_ppl = val_ppl
             
             # Extract basic telemetry stats
             d_mean = 0.0
@@ -213,17 +249,27 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
                 "model_state_dict": model.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
                 "scheduler_state_dict": scheduler.state_dict(),
+                "cpu_rng_state": torch.get_rng_state(),
+                "cuda_rng_state": torch.cuda.get_rng_state() if torch.cuda.is_available() else None,
+                "total_train_time": total_train_time,
+                "best_val_ce": best_val_ce,
+                "best_val_ppl": best_val_ppl,
             }
             torch.save(ckpt, f"ckpt_{name}_step{global_step}.pt")
             torch.save(ckpt, latest_ckpt_path)
             
-        elif global_step % 250 == 0 and global_step != 0:
+        elif global_step % ckpt_interval == 0 and global_step != 0:
             # Save intermediate resumable checkpoint without full eval
             ckpt = {
                 "step": global_step,
                 "model_state_dict": model.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
                 "scheduler_state_dict": scheduler.state_dict(),
+                "cpu_rng_state": torch.get_rng_state(),
+                "cuda_rng_state": torch.cuda.get_rng_state() if torch.cuda.is_available() else None,
+                "total_train_time": total_train_time,
+                "best_val_ce": best_val_ce,
+                "best_val_ppl": best_val_ppl,
             }
             torch.save(ckpt, latest_ckpt_path)
             
@@ -232,17 +278,41 @@ def train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device
     del model, optimizer, scheduler, criterion
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
+        
+    return {
+        "final_val_ce": final_val_ce,
+        "final_val_ppl": final_val_ppl,
+        "best_val_ce": best_val_ce,
+        "best_val_ppl": best_val_ppl,
+        "train_time": total_train_time,
+        "avg_tps": avg_tps
+    }
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--pilot", action="store_true", help="Run 50 step short pilot mode")
+    parser.add_argument("--medium", action="store_true", help="Run 500 step medium mode")
     args = parser.parse_args()
     
-    total_steps = 50 if args.pilot else 5000
-    eval_interval = 10 if args.pilot else 500
-    
+    if args.pilot:
+        total_steps = 50
+        eval_interval = 10
+        print_interval = 10
+        ckpt_interval = 25
+    elif args.medium:
+        total_steps = 500
+        eval_interval = 50
+        print_interval = 25
+        ckpt_interval = 100
+    else:
+        total_steps = 5000
+        eval_interval = 500
+        print_interval = 50
+        ckpt_interval = 250
+        
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device} | Pilot Mode: {args.pilot} | Total Steps: {total_steps} | Eval Interval: {eval_interval}")
+    mode_str = "Pilot" if args.pilot else ("Medium" if args.medium else "Full")
+    print(f"Using device: {device} | Mode: {mode_str} | Total Steps: {total_steps} | Eval Interval: {eval_interval}")
     
     set_seed(42)
     
@@ -291,9 +361,22 @@ def main():
         ("E5", lambda: ControlledHyperloopMoE(CHMConfig(**{**chm_cfg.__dict__, "flux_mode": "E5"}))),
     ]
     
+    results = {}
     for name, model_fn in contestants:
-        train_contestant(name, model_fn, tokenizer, train_loader, val_loader, device, total_steps, eval_interval)
+        results[name] = train_contestant(
+            name, model_fn, tokenizer, train_loader, val_loader, device, 
+            total_steps, eval_interval, print_interval, ckpt_interval
+        )
         
+    print("\n" + "="*80)
+    print(f"{'CONTESTANT COMPARISON TABLE':^80}")
+    print("="*80)
+    print(f"{'Contestant':<12} | {'Best CE':<8} | {'Best PPL':<8} | {'Final CE':<8} | {'Final PPL':<9} | {'Time(s)':<8} | {'Tok/s':<8}")
+    print("-" * 80)
+    for name, res in results.items():
+        print(f"{name:<12} | {res['best_val_ce']:<8.4f} | {res['best_val_ppl']:<8.2f} | {res['final_val_ce']:<8.4f} | {res['final_val_ppl']:<9.2f} | {res['train_time']:<8.1f} | {res['avg_tps']:<8.0f}")
+    print("="*80)
+    
     print("\nTraining complete!")
 
 if __name__ == "__main__":
