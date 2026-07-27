@@ -56,8 +56,11 @@ class ControlledHyperloopMoE(nn.Module):
         # Tie weights after init
         self.lm_head.weight = self.tok_emb.weight
         
-    def forward(self, input_ids: torch.Tensor):
-        x = self.drop(self.tok_emb(input_ids))
+    def forward(self, input_ids: torch.Tensor = None, inputs_embeds: torch.Tensor = None, return_features: bool = False):
+        if inputs_embeds is None:
+            x = self.drop(self.tok_emb(input_ids))
+        else:
+            x = inputs_embeds
         
         for layer in self.prelude:
             x = layer(x)
@@ -70,4 +73,6 @@ class ControlledHyperloopMoE(nn.Module):
         x = self.norm_out(x)
         logits = self.lm_head(x)
         
+        if return_features:
+            return logits, telemetry, x
         return logits, telemetry
