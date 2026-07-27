@@ -92,11 +92,12 @@ class E0Memory(nn.Module):
         
         return logits_chunk, telemetry, new_memory_state
 
-    def forward(self, input_ids: torch.Tensor, chunk_size: int = 256, detach_memory_every: int = 1):
+    def forward(self, input_ids: torch.Tensor, chunk_size: int = 256, detach_memory_every: int = 1, return_last_chunk_only: bool = False):
         """
         Process a long logical sequence by chunking it.
         Implements Truncated Backpropagation Through Time (TBPTT).
         detach_memory_every: number of chunks before detaching memory state to save VRAM.
+        return_last_chunk_only: if True, only returns logits for the final chunk, freeing VRAM for earlier chunks if memory is detached.
         """
         B, L = input_ids.shape
         device = input_ids.device
@@ -115,7 +116,14 @@ class E0Memory(nn.Module):
                 
             logits_chunk, telemetry, memory_state = self.forward_chunk(chunk_ids, memory_state)
             
-            all_logits.append(logits_chunk)
+            if not return_last_chunk_only:
+                # If we are doing TBPTT but keeping all logits, we must detach early logits 
+                # to actually free the graph, OR keep them attached if the user wants full gradients.
+                # Standard causal LM requires gradients, but retaining all graphs will OOM.
+                # For safety in this wrapper, we just append. To avoid OOM, use return_last_chunk_only=True
+                all_logits.append(logits_chunk)
+            else:
+                all_logits = [logits_chunk] # Only keep the latest one
             
             # Accumulate telemetry
             for k, v in telemetry.items():

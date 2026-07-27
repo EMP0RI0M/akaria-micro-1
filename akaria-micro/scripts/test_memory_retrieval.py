@@ -1,46 +1,61 @@
 import torch
 import torch.nn as nn
+import time
+import csv
+import os
 from chm.config import CHMConfig
 from chm.memory import E0Memory
 
-def generate_retrieval_batch(batch_size, logical_seq_len, vocab_size=16384, device='cpu'):
-    """
-    Generates a synthetic associative retrieval task.
-    KEY is placed near the beginning.
-    QUERY is placed near the end.
-    The model must output the VALUE associated with the KEY.
-    """
-    # Create random filler
-    inputs = torch.randint(1000, 5000, (batch_size, logical_seq_len), device=device)
+def generate_retrieval_batch(batch_size, logical_seq_len, chunk_size=256, num_pairs=4, device='cpu'):
+    # Fill with random filler
+    inputs = torch.randint(3001, 16000, (batch_size, logical_seq_len), device=device)
     targets = torch.full((batch_size, logical_seq_len), -100, dtype=torch.long, device=device)
     
     query_marker = 999
     
     for b in range(batch_size):
-        # Random keys and values
-        key = torch.randint(100, 500, (1,)).item()
-        val = torch.randint(501, 900, (1,)).item()
+        # Keys and values from the exact same distribution
+        keys = torch.randperm(2000)[:num_pairs] + 1000
+        values = torch.randperm(2000)[:num_pairs] + 1000
         
-        # Place key-value pair in the first chunk (e.g. index 10, 11)
-        inputs[b, 10] = key
-        inputs[b, 11] = val
+        # Place pairs randomly in the first chunk
+        positions = torch.randperm(chunk_size - 2)[:num_pairs]
+        for i in range(num_pairs):
+            pos = positions[i].item()
+            inputs[b, pos] = keys[i]
+            inputs[b, pos+1] = values[i]
+            
+        # Target pair
+        target_idx = torch.randint(0, num_pairs, (1,)).item()
+        target_key = keys[target_idx]
+        target_val = values[target_idx]
         
-        # Place query at the end
+        # Place query at the end (must be in the last chunk)
         query_pos = logical_seq_len - 3
         inputs[b, query_pos] = query_marker
-        inputs[b, query_pos + 1] = key
+        inputs[b, query_pos + 1] = target_key
         
-        # Target for the position after the key is the value
-        targets[b, query_pos + 1] = val
+        # Predict the token AFTER the key
+        targets[b, query_pos + 2] = target_val
         
     return inputs, targets
 
+def get_vram_usage():
+    if not torch.cuda.is_available():
+        return 0, 0
+    allocated = torch.cuda.memory_allocated() / (1024 ** 3)
+    reserved = torch.cuda.memory_reserved() / (1024 ** 3)
+    return allocated, reserved
+
 def main():
     print("="*60)
-    print("LONG-RANGE MEMORY BENCHMARK - SYNTHETIC RETRIEVAL")
+    print("E0-MEMORY 512 RETRIEVAL BENCHMARK")
     print("="*60)
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    vram_alloc_start, vram_res_start = get_vram_usage()
+    print(f"VRAM at beginning: {vram_alloc_start:.2f} GB allocated, {vram_res_start:.2f} GB reserved")
     
     cfg = CHMConfig(
         vocab_size=16384,
@@ -54,51 +69,148 @@ def main():
     )
     
     model = E0Memory(cfg, num_mem_tokens=16, mem_refinement_steps=1).to(device)
-    model.train()
     
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+    param_count = sum(p.numel() for p in model.parameters())
+    print(f"Parameters: {param_count / 1e6:.2f}M")
+    
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)
     criterion = nn.CrossEntropyLoss(ignore_index=-100)
     
-    contexts = [512, 1024, 2048, 4096, 8192]
-    batch_size = 4
+    batch_size = 8
+    logical_seq_len = 512
     chunk_size = 256
     
-    for ctx_len in contexts:
-        print(f"\nTesting Logical Context Length: {ctx_len}")
-        print("-" * 40)
+    log_file = "memory_retrieval_512_metrics.csv"
+    with open(log_file, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["Step", "Train_Loss", "Train_Acc", "Val_Acc", "VRAM_Alloc_GB"])
         
-        for step in range(10): # Tiny pilot steps
-            optimizer.zero_grad()
+    best_val_acc = -1.0
+    initial_loss = None
+    final_loss = None
+    final_val_acc = 0.0
+    
+    consecutive_successes = 0
+    solved = False
+    
+    print("-" * 60)
+    
+    for step in range(1, 501):
+        model.train()
+        optimizer.zero_grad()
+        
+        inputs, targets = generate_retrieval_batch(batch_size, logical_seq_len, chunk_size, device=device)
+        
+        # Full BPTT for 512 (detach_memory_every=0) to ensure gradients flow back to chunk 1
+        # Use return_last_chunk_only=True to prevent VRAM accumulation of early chunk logits
+        logits_last_chunk, _ = model(inputs, chunk_size=chunk_size, detach_memory_every=0, return_last_chunk_only=True)
+        
+        # Calculate loss only on the last chunk
+        targets_last_chunk = targets[:, -chunk_size:]
+        shift_logits = logits_last_chunk[:, :-1, :].contiguous()
+        shift_labels = targets_last_chunk[:, 1:].contiguous()
+        
+        loss = criterion(shift_logits.view(-1, cfg.vocab_size), shift_labels.view(-1))
+        
+        if step == 1:
+            initial_loss = loss.item()
             
-            inputs, targets = generate_retrieval_batch(batch_size, ctx_len, device=device)
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        optimizer.step()
+        
+        # Calculate train accuracy
+        with torch.no_grad():
+            preds = torch.argmax(shift_logits, dim=-1)
+            mask = shift_labels != -100
+            correct = (preds[mask] == shift_labels[mask]).sum().item()
+            total = mask.sum().item()
+            train_acc = correct / max(total, 1) * 100
             
-            # Forward pass with memory chunking
-            logits, telemetry = model(inputs, chunk_size=chunk_size, detach_memory_every=4)
+        if step % 25 == 0 or step == 1:
+            alloc, res = get_vram_usage()
+            print(f"Step {step:4d} | Loss: {loss.item():.4f} | Train Acc: {train_acc:5.1f}% | VRAM Alloc: {alloc:.2f}GB | Res: {res:.2f}GB")
             
-            # Loss calculation
-            # Shift logits and targets by 1 for next-token prediction
-            shift_logits = logits[..., :-1, :].contiguous()
-            shift_labels = targets[..., 1:].contiguous()
+        # Validation
+        if step % 50 == 0:
+            model.eval()
+            val_correct = 0
+            val_total = 0
+            with torch.no_grad():
+                for _ in range(10): # 10 val batches
+                    v_in, v_tgt = generate_retrieval_batch(batch_size, logical_seq_len, chunk_size, device=device)
+                    v_log, _ = model(v_in, chunk_size=chunk_size, detach_memory_every=0, return_last_chunk_only=True)
+                    
+                    s_log = v_log[:, :-1, :].contiguous()
+                    s_lbl = v_tgt[:, -chunk_size:][:, 1:].contiguous()
+                    
+                    p = torch.argmax(s_log, dim=-1)
+                    m = s_lbl != -100
+                    val_correct += (p[m] == s_lbl[m]).sum().item()
+                    val_total += m.sum().item()
+                    
+            val_acc = val_correct / max(val_total, 1) * 100
+            final_val_acc = val_acc
+            print(f" ---> EVAL Step {step}: Validation Acc: {val_acc:.1f}%")
             
-            loss = criterion(shift_logits.view(-1, cfg.vocab_size), shift_labels.view(-1))
-            
-            if step == 0:
-                print(f"  Step {step} Initial Loss: {loss.item():.4f}")
+            with open(log_file, "a", newline="") as f:
+                writer = csv.writer(f)
+                alloc, _ = get_vram_usage()
+                writer.writerow([step, loss.item(), train_acc, val_acc, alloc])
                 
-            loss.backward()
-            optimizer.step()
+            ckpt = {
+                "step": step,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "val_acc": val_acc
+            }
             
-            if step == 9:
-                print(f"  Step {step} Final Loss:   {loss.item():.4f}")
+            # Save latest
+            torch.save(ckpt, "memory_retrieval_512_latest.pt.tmp")
+            os.replace("memory_retrieval_512_latest.pt.tmp", "memory_retrieval_512_latest.pt")
+            
+            if val_acc > best_val_acc:
+                best_val_acc = val_acc
+                torch.save(ckpt, "memory_retrieval_512_best.pt.tmp")
+                os.replace("memory_retrieval_512_best.pt.tmp", "memory_retrieval_512_best.pt")
                 
-                # Check accuracy
-                with torch.no_grad():
-                    preds = torch.argmax(shift_logits, dim=-1)
-                    mask = shift_labels != -100
-                    correct = (preds[mask] == shift_labels[mask]).sum().item()
-                    total = mask.sum().item()
-                    acc = correct / max(total, 1) * 100
-                    print(f"  Retrieval Accuracy: {acc:.1f}%")
+            if val_acc >= 90.0:
+                consecutive_successes += 1
+                if consecutive_successes >= 3:
+                    print("\n[SUCCESS] Validation retrieval accuracy >= 90% for 3 consecutive evaluations.")
+                    print("512-token retrieval declared SOLVED!")
+                    solved = True
+                    final_loss = loss.item()
+                    break
+            else:
+                consecutive_successes = 0
+                
+        final_loss = loss.item()
+
+    # End reporting
+    if torch.cuda.is_available():
+        peak_vram = torch.cuda.max_memory_allocated() / (1024 ** 3)
+    else:
+        peak_vram = 0.0
+        
+    vram_alloc_end, _ = get_vram_usage()
+    
+    print("\n" + "="*60)
+    print("E0-MEMORY 512 RETRIEVAL RESULT")
+    print("="*60)
+    print(f"Initial Loss: {initial_loss:.4f}")
+    print(f"Final Loss: {final_loss:.4f}")
+    print(f"Best Validation Accuracy: {best_val_acc:.1f}%")
+    print(f"Final Validation Accuracy: {final_val_acc:.1f}%")
+    print(f"VRAM at End: {vram_alloc_end:.2f} GB")
+    print(f"Peak VRAM: {peak_vram:.2f} GB")
+    print(f"Parameters: {param_count / 1e6:.2f}M")
+    print(f"Solved: {'YES' if solved else 'NO'}")
+    print("="*60)
+    
+    if solved:
+        print("\nArchitecture passed Stage 1.")
+        print("Stopping benchmark as requested. Please verify no data leakage before scaling.")
 
 if __name__ == "__main__":
     main()
