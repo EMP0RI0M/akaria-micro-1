@@ -92,11 +92,11 @@
    "-I/root/Arduino/libraries/LiquidCrystal/src",
    "-I/root/Arduino/libraries/DHT_sensor_library",
    "-I/root/Arduino/libraries/Adafruit_Unified_Sensor",
-   "/root/Arduino/libraries/DHT_sensor_library/DHT_U.cpp",
+   "/root/Arduino/libraries/DHT_sensor_library/DHT.cpp",
    "-o",
-   "/root/TESLAX/build/libraries/DHT_sensor_library/DHT_U.cpp.o"
+   "/root/TESLAX/build/libraries/DHT_sensor_library/DHT.cpp.o"
   ],
-  "file": "/root/Arduino/libraries/DHT_sensor_library/DHT_U.cpp"
+  "file": "/root/Arduino/libraries/DHT_sensor_library/DHT.cpp"
  },
  {
   "directory": "/root",
@@ -125,11 +125,11 @@
    "-I/root/Arduino/libraries/LiquidCrystal/src",
    "-I/root/Arduino/libraries/DHT_sensor_library",
    "-I/root/Arduino/libraries/Adafruit_Unified_Sensor",
-   "/root/Arduino/libraries/DHT_sensor_library/DHT.cpp",
+   "/root/Arduino/libraries/DHT_sensor_library/DHT_U.cpp",
    "-o",
-   "/root/TESLAX/build/libraries/DHT_sensor_library/DHT.cpp.o"
+   "/root/TESLAX/build/libraries/DHT_sensor_library/DHT_U.cpp.o"
   ],
-  "file": "/root/Arduino/libraries/DHT_sensor_library/DHT.cpp"
+  "file": "/root/Arduino/libraries/DHT_sensor_library/DHT_U.cpp"
  },
  {
   "directory": "/root",
@@ -188,101 +188,11 @@
    "-DARDUINO_ARCH_AVR",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
-   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/HardwareSerial2.cpp",
-   "-o",
-   "/root/TESLAX/build/core/HardwareSerial2.cpp.o"
-  ],
-  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/HardwareSerial2.cpp"
- },
- {
-  "directory": "/root",
-  "arguments": [
-   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
-   "-c",
-   "-g",
-   "-Os",
-   "-w",
-   "-std=gnu++11",
-   "-fpermissive",
-   "-fno-exceptions",
-   "-ffunction-sections",
-   "-fdata-sections",
-   "-fno-threadsafe-statics",
-   "-Wno-error=narrowing",
-   "-MMD",
-   "-flto",
-   "-mmcu=atmega2560",
-   "-DF_CPU=16000000L",
-   "-DARDUINO=10607",
-   "-DARDUINO_AVR_MEGA2560",
-   "-DARDUINO_ARCH_AVR",
-   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
-   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
-   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/HardwareSerial3.cpp",
-   "-o",
-   "/root/TESLAX/build/core/HardwareSerial3.cpp.o"
-  ],
-  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/HardwareSerial3.cpp"
- },
- {
-  "directory": "/root",
-  "arguments": [
-   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
-   "-c",
-   "-g",
-   "-Os",
-   "-w",
-   "-std=gnu++11",
-   "-fpermissive",
-   "-fno-exceptions",
-   "-ffunction-sections",
-   "-fdata-sections",
-   "-fno-threadsafe-statics",
-   "-Wno-error=narrowing",
-   "-MMD",
-   "-flto",
-   "-mmcu=atmega2560",
-   "-DF_CPU=16000000L",
-   "-DARDUINO=10607",
-   "-DARDUINO_AVR_MEGA2560",
-   "-DARDUINO_ARCH_AVR",
-   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
-   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
    "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/CDC.cpp",
    "-o",
    "/root/TESLAX/build/core/CDC.cpp.o"
   ],
   "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/CDC.cpp"
- },
- {
-  "directory": "/root",
-  "arguments": [
-   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
-   "-c",
-   "-g",
-   "-Os",
-   "-w",
-   "-std=gnu++11",
-   "-fpermissive",
-   "-fno-exceptions",
-   "-ffunction-sections",
-   "-fdata-sections",
-   "-fno-threadsafe-statics",
-   "-Wno-error=narrowing",
-   "-MMD",
-   "-flto",
-   "-mmcu=atmega2560",
-   "-DF_CPU=16000000L",
-   "-DARDUINO=10607",
-   "-DARDUINO_AVR_MEGA2560",
-   "-DARDUINO_ARCH_AVR",
-   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
-   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
-   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/PluggableUSB.cpp",
-   "-o",
-   "/root/TESLAX/build/core/PluggableUSB.cpp.o"
-  ],
-  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/PluggableUSB.cpp"
  },
  {
   "directory": "/root",
@@ -338,71 +248,11 @@
    "-DARDUINO_ARCH_AVR",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
-   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/HardwareSerial0.cpp",
-   "-o",
-   "/root/TESLAX/build/core/HardwareSerial0.cpp.o"
-  ],
-  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/HardwareSerial0.cpp"
- },
- {
-  "directory": "/root",
-  "arguments": [
-   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
-   "-c",
-   "-g",
-   "-Os",
-   "-w",
-   "-std=gnu++11",
-   "-fpermissive",
-   "-fno-exceptions",
-   "-ffunction-sections",
-   "-fdata-sections",
-   "-fno-threadsafe-statics",
-   "-Wno-error=narrowing",
-   "-MMD",
-   "-flto",
-   "-mmcu=atmega2560",
-   "-DF_CPU=16000000L",
-   "-DARDUINO=10607",
-   "-DARDUINO_AVR_MEGA2560",
-   "-DARDUINO_ARCH_AVR",
-   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
-   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
    "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/HardwareSerial1.cpp",
    "-o",
    "/root/TESLAX/build/core/HardwareSerial1.cpp.o"
   ],
   "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/HardwareSerial1.cpp"
- },
- {
-  "directory": "/root",
-  "arguments": [
-   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
-   "-c",
-   "-g",
-   "-Os",
-   "-w",
-   "-std=gnu++11",
-   "-fpermissive",
-   "-fno-exceptions",
-   "-ffunction-sections",
-   "-fdata-sections",
-   "-fno-threadsafe-statics",
-   "-Wno-error=narrowing",
-   "-MMD",
-   "-flto",
-   "-mmcu=atmega2560",
-   "-DF_CPU=16000000L",
-   "-DARDUINO=10607",
-   "-DARDUINO_AVR_MEGA2560",
-   "-DARDUINO_ARCH_AVR",
-   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
-   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
-   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/IPAddress.cpp",
-   "-o",
-   "/root/TESLAX/build/core/IPAddress.cpp.o"
-  ],
-  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/IPAddress.cpp"
  },
  {
   "directory": "/root",
@@ -458,11 +308,11 @@
    "-DARDUINO_ARCH_AVR",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
-   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/Stream.cpp",
+   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/IPAddress.cpp",
    "-o",
-   "/root/TESLAX/build/core/Stream.cpp.o"
+   "/root/TESLAX/build/core/IPAddress.cpp.o"
   ],
-  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/Stream.cpp"
+  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/IPAddress.cpp"
  },
  {
   "directory": "/root",
@@ -527,17 +377,20 @@
  {
   "directory": "/root",
   "arguments": [
-   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-gcc",
+   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
    "-c",
    "-g",
    "-Os",
    "-w",
-   "-std=gnu11",
+   "-std=gnu++11",
+   "-fpermissive",
+   "-fno-exceptions",
    "-ffunction-sections",
    "-fdata-sections",
+   "-fno-threadsafe-statics",
+   "-Wno-error=narrowing",
    "-MMD",
    "-flto",
-   "-fno-fat-lto-objects",
    "-mmcu=atmega2560",
    "-DF_CPU=16000000L",
    "-DARDUINO=10607",
@@ -545,11 +398,11 @@
    "-DARDUINO_ARCH_AVR",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
-   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/WInterrupts.c",
+   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/Stream.cpp",
    "-o",
-   "/root/TESLAX/build/core/WInterrupts.c.o"
+   "/root/TESLAX/build/core/Stream.cpp.o"
   ],
-  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/WInterrupts.c"
+  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/Stream.cpp"
  },
  {
   "directory": "/root",
@@ -635,11 +488,11 @@
    "-DARDUINO_ARCH_AVR",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
-   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/abi.cpp",
+   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/HardwareSerial2.cpp",
    "-o",
-   "/root/TESLAX/build/core/abi.cpp.o"
+   "/root/TESLAX/build/core/HardwareSerial2.cpp.o"
   ],
-  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/abi.cpp"
+  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/HardwareSerial2.cpp"
  },
  {
   "directory": "/root",
@@ -671,20 +524,17 @@
  {
   "directory": "/root",
   "arguments": [
-   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
+   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-gcc",
    "-c",
    "-g",
    "-Os",
    "-w",
-   "-std=gnu++11",
-   "-fpermissive",
-   "-fno-exceptions",
+   "-std=gnu11",
    "-ffunction-sections",
    "-fdata-sections",
-   "-fno-threadsafe-statics",
-   "-Wno-error=narrowing",
    "-MMD",
    "-flto",
+   "-fno-fat-lto-objects",
    "-mmcu=atmega2560",
    "-DF_CPU=16000000L",
    "-DARDUINO=10607",
@@ -692,11 +542,11 @@
    "-DARDUINO_ARCH_AVR",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
-   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/new.cpp",
+   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/WInterrupts.c",
    "-o",
-   "/root/TESLAX/build/core/new.cpp.o"
+   "/root/TESLAX/build/core/WInterrupts.c.o"
   ],
-  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/new.cpp"
+  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/WInterrupts.c"
  },
  {
   "directory": "/root",
@@ -731,17 +581,20 @@
  {
   "directory": "/root",
   "arguments": [
-   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-gcc",
+   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
    "-c",
    "-g",
    "-Os",
    "-w",
-   "-std=gnu11",
+   "-std=gnu++11",
+   "-fpermissive",
+   "-fno-exceptions",
    "-ffunction-sections",
    "-fdata-sections",
+   "-fno-threadsafe-statics",
+   "-Wno-error=narrowing",
    "-MMD",
    "-flto",
-   "-fno-fat-lto-objects",
    "-mmcu=atmega2560",
    "-DF_CPU=16000000L",
    "-DARDUINO=10607",
@@ -749,26 +602,29 @@
    "-DARDUINO_ARCH_AVR",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
-   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/wiring.c",
+   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/HardwareSerial0.cpp",
    "-o",
-   "/root/TESLAX/build/core/wiring.c.o"
+   "/root/TESLAX/build/core/HardwareSerial0.cpp.o"
   ],
-  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/wiring.c"
+  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/HardwareSerial0.cpp"
  },
  {
   "directory": "/root",
   "arguments": [
-   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-gcc",
+   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
    "-c",
    "-g",
    "-Os",
    "-w",
-   "-std=gnu11",
+   "-std=gnu++11",
+   "-fpermissive",
+   "-fno-exceptions",
    "-ffunction-sections",
    "-fdata-sections",
+   "-fno-threadsafe-statics",
+   "-Wno-error=narrowing",
    "-MMD",
    "-flto",
-   "-fno-fat-lto-objects",
    "-mmcu=atmega2560",
    "-DF_CPU=16000000L",
    "-DARDUINO=10607",
@@ -776,11 +632,41 @@
    "-DARDUINO_ARCH_AVR",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
-   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/wiring_analog.c",
+   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/abi.cpp",
    "-o",
-   "/root/TESLAX/build/core/wiring_analog.c.o"
+   "/root/TESLAX/build/core/abi.cpp.o"
   ],
-  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/wiring_analog.c"
+  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/abi.cpp"
+ },
+ {
+  "directory": "/root",
+  "arguments": [
+   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
+   "-c",
+   "-g",
+   "-Os",
+   "-w",
+   "-std=gnu++11",
+   "-fpermissive",
+   "-fno-exceptions",
+   "-ffunction-sections",
+   "-fdata-sections",
+   "-fno-threadsafe-statics",
+   "-Wno-error=narrowing",
+   "-MMD",
+   "-flto",
+   "-mmcu=atmega2560",
+   "-DF_CPU=16000000L",
+   "-DARDUINO=10607",
+   "-DARDUINO_AVR_MEGA2560",
+   "-DARDUINO_ARCH_AVR",
+   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
+   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/PluggableUSB.cpp",
+   "-o",
+   "/root/TESLAX/build/core/PluggableUSB.cpp.o"
+  ],
+  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/PluggableUSB.cpp"
  },
  {
   "directory": "/root",
@@ -853,6 +739,90 @@
    "-DARDUINO_ARCH_AVR",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
+   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/wiring_shift.c",
+   "-o",
+   "/root/TESLAX/build/core/wiring_shift.c.o"
+  ],
+  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/wiring_shift.c"
+ },
+ {
+  "directory": "/root",
+  "arguments": [
+   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
+   "-c",
+   "-g",
+   "-Os",
+   "-w",
+   "-std=gnu++11",
+   "-fpermissive",
+   "-fno-exceptions",
+   "-ffunction-sections",
+   "-fdata-sections",
+   "-fno-threadsafe-statics",
+   "-Wno-error=narrowing",
+   "-MMD",
+   "-flto",
+   "-mmcu=atmega2560",
+   "-DF_CPU=16000000L",
+   "-DARDUINO=10607",
+   "-DARDUINO_AVR_MEGA2560",
+   "-DARDUINO_ARCH_AVR",
+   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
+   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/new.cpp",
+   "-o",
+   "/root/TESLAX/build/core/new.cpp.o"
+  ],
+  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/new.cpp"
+ },
+ {
+  "directory": "/root",
+  "arguments": [
+   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-gcc",
+   "-c",
+   "-g",
+   "-Os",
+   "-w",
+   "-std=gnu11",
+   "-ffunction-sections",
+   "-fdata-sections",
+   "-MMD",
+   "-flto",
+   "-fno-fat-lto-objects",
+   "-mmcu=atmega2560",
+   "-DF_CPU=16000000L",
+   "-DARDUINO=10607",
+   "-DARDUINO_AVR_MEGA2560",
+   "-DARDUINO_ARCH_AVR",
+   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
+   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/wiring.c",
+   "-o",
+   "/root/TESLAX/build/core/wiring.c.o"
+  ],
+  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/wiring.c"
+ },
+ {
+  "directory": "/root",
+  "arguments": [
+   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-gcc",
+   "-c",
+   "-g",
+   "-Os",
+   "-w",
+   "-std=gnu11",
+   "-ffunction-sections",
+   "-fdata-sections",
+   "-MMD",
+   "-flto",
+   "-fno-fat-lto-objects",
+   "-mmcu=atmega2560",
+   "-DF_CPU=16000000L",
+   "-DARDUINO=10607",
+   "-DARDUINO_AVR_MEGA2560",
+   "-DARDUINO_ARCH_AVR",
+   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
    "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/wiring_pulse.c",
    "-o",
    "/root/TESLAX/build/core/wiring_pulse.c.o"
@@ -880,10 +850,40 @@
    "-DARDUINO_ARCH_AVR",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
    "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
-   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/wiring_shift.c",
+   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/wiring_analog.c",
    "-o",
-   "/root/TESLAX/build/core/wiring_shift.c.o"
+   "/root/TESLAX/build/core/wiring_analog.c.o"
   ],
-  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/wiring_shift.c"
+  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/wiring_analog.c"
+ },
+ {
+  "directory": "/root",
+  "arguments": [
+   "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
+   "-c",
+   "-g",
+   "-Os",
+   "-w",
+   "-std=gnu++11",
+   "-fpermissive",
+   "-fno-exceptions",
+   "-ffunction-sections",
+   "-fdata-sections",
+   "-fno-threadsafe-statics",
+   "-Wno-error=narrowing",
+   "-MMD",
+   "-flto",
+   "-mmcu=atmega2560",
+   "-DF_CPU=16000000L",
+   "-DARDUINO=10607",
+   "-DARDUINO_AVR_MEGA2560",
+   "-DARDUINO_ARCH_AVR",
+   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+   "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
+   "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/HardwareSerial3.cpp",
+   "-o",
+   "/root/TESLAX/build/core/HardwareSerial3.cpp.o"
+  ],
+  "file": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino/HardwareSerial3.cpp"
  }
 ]
