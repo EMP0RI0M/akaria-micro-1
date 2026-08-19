@@ -1,0 +1,22 @@
+#include <Arduino.h>
+#line 1 "/root/TESLAX/TESLAX.ino"
+// Arduino CLI project entry point. The implementation remains in sketch.ino.
+
+#line 1 "/root/TESLAX/esp32_gateway.ino"
+#if defined(ARDUINO_ARCH_ESP32)
+#include <Arduino.h>
+void setup(){Serial.begin(115200);Serial2.begin(115200);Serial.println("TESLAX ESP32 GATEWAY READY");}
+void loop(){while(Serial2.available())Serial.write(Serial2.read());delay(10);}
+#endif
+
+#line 1 "/root/TESLAX/sketch.ino"
+#include <Arduino.h>
+#include <LiquidCrystal.h>
+#include <DHT.h>
+#include "teslax_config.h"
+LiquidCrystal lcd(LCD_RS,LCD_EN,LCD_D4,LCD_D5,LCD_D6,LCD_D7); DHT dht(PIN_DHT,DHT22);
+bool faultA=false,faultB=false; unsigned long tick=0; float distanceCm=0,temp=NAN,hum=NAN;
+void safeOff(){digitalWrite(PIN_RELAY_A,LOW);digitalWrite(PIN_RELAY_B,LOW);digitalWrite(PIN_COIL_A,LOW);digitalWrite(PIN_COIL_B,LOW);}
+void setup(){pinMode(PIN_TRIG,OUTPUT);pinMode(PIN_ECHO,INPUT);pinMode(PIN_IR,INPUT);pinMode(PIN_BUZZER,OUTPUT);const uint8_t outputs[]={PIN_RELAY_A,PIN_RELAY_B,PIN_COIL_A,PIN_COIL_B,PIN_RECT_A,PIN_RECT_B,PIN_STATUS,PIN_FAULT_A,PIN_FAULT_B,PIN_SYSTEM};for(uint8_t i=0;i<sizeof(outputs);i++)pinMode(outputs[i],OUTPUT);safeOff();dht.begin();lcd.begin(16,2);Serial.begin(115200);Serial1.begin(115200);lcd.print("TESLAX SAFE MODE");Serial.println("TESLAX,BOOT,MEGA2560");}
+void loop(){if(millis()-tick<1000)return;tick=millis();digitalWrite(PIN_TRIG,LOW);delayMicroseconds(2);digitalWrite(PIN_TRIG,HIGH);delayMicroseconds(10);digitalWrite(PIN_TRIG,LOW);unsigned long u=pulseIn(PIN_ECHO,HIGH,30000);distanceCm=u?u*.0343f/2:999;temp=dht.readTemperature();hum=dht.readHumidity();bool sensorFail=isnan(temp)||isnan(hum);int rx=analogRead(PIN_RX_STATUS),busA=analogRead(PIN_BUS_A),busB=analogRead(PIN_BUS_B);faultA=distanceCm>180||sensorFail||busA<20;faultB=rx<20||sensorFail||busB<20;safeOff();digitalWrite(PIN_RECT_A,HIGH);digitalWrite(PIN_RECT_B,HIGH);if(!faultA){digitalWrite(PIN_RELAY_A,HIGH);digitalWrite(PIN_COIL_A,HIGH);}if(!faultB){digitalWrite(PIN_RELAY_B,HIGH);digitalWrite(PIN_COIL_B,HIGH);}digitalWrite(PIN_STATUS,!faultA&&!faultB);digitalWrite(PIN_FAULT_A,faultA);digitalWrite(PIN_FAULT_B,faultB);digitalWrite(PIN_SYSTEM,faultA||faultB);if(faultA||faultB)tone(PIN_BUZZER,1800,120);lcd.setCursor(0,0);lcd.print("D:");lcd.print((int)distanceCm);lcd.print(" T:");lcd.print((int)temp);lcd.print("C   ");lcd.setCursor(0,1);lcd.print(faultA?"A!":"AOK");lcd.print(" ");lcd.print(faultB?"B!":"BOK");lcd.print(" RX");lcd.print(rx);lcd.print(" ");Serial.print("TESLAX { distance:");Serial.print(distanceCm,1);Serial.print(", temperature:");Serial.print(temp,1);Serial.print(", humidity:");Serial.print(hum,1);Serial.print(", moisture:");Serial.print(analogRead(PIN_MOISTURE));Serial.print(", light:");Serial.print(analogRead(PIN_LIGHT));Serial.print(", endA:");Serial.print(!faultA);Serial.print(", endB:");Serial.print(!faultB);Serial.print(", gridA:");Serial.print(busA);Serial.print(", gridB:");Serial.print(busB);Serial.print(", coilA:");Serial.print(!faultA);Serial.print(", coilB:");Serial.print(!faultB);Serial.print(", faultA:");Serial.print(faultA);Serial.print(", faultB:");Serial.print(faultB);Serial.println(" }");Serial1.print("TESLAX_BRIDGE A=");Serial1.print(!faultA);Serial1.print(" B=");Serial1.println(!faultB);}
+

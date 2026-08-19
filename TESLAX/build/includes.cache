@@ -1,0 +1,384 @@
+[
+  {
+    "added_include_path": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino"
+  },
+  {
+    "added_include_path": "/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega"
+  },
+  {
+    "compile": {
+      "source_path": "/root/TESLAX/build/sketch/TESLAX.ino.cpp.merged",
+      "depfile_path": "/root/TESLAX/build/sketch/TESLAX.ino.cpp.merged.libsdetect.d"
+    },
+    "compile_task": {
+      "args": [
+        "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
+        "-c",
+        "-g",
+        "-Os",
+        "-w",
+        "-std=gnu++11",
+        "-fpermissive",
+        "-fno-exceptions",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fno-threadsafe-statics",
+        "-Wno-error=narrowing",
+        "-flto",
+        "-w",
+        "-x",
+        "c++",
+        "-E",
+        "-CC",
+        "-mmcu=atmega2560",
+        "-DF_CPU=16000000L",
+        "-DARDUINO=10607",
+        "-DARDUINO_AVR_MEGA2560",
+        "-DARDUINO_ARCH_AVR",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
+        "/root/TESLAX/build/sketch/TESLAX.ino.cpp.merged",
+        "-o",
+        "/dev/null",
+        "-MMD",
+        "-MF",
+        "/root/TESLAX/build/sketch/TESLAX.ino.cpp.merged.libsdetect.d"
+      ]
+    }
+  },
+  {
+    "missing_include_h": "LiquidCrystal.h"
+  },
+  {
+    "added_include_path": "/root/Arduino/libraries/LiquidCrystal/src"
+  },
+  {
+    "compile": {
+      "source_path": "/root/TESLAX/build/sketch/TESLAX.ino.cpp.merged",
+      "depfile_path": "/root/TESLAX/build/sketch/TESLAX.ino.cpp.merged.libsdetect.d"
+    },
+    "compile_task": {
+      "args": [
+        "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
+        "-c",
+        "-g",
+        "-Os",
+        "-w",
+        "-std=gnu++11",
+        "-fpermissive",
+        "-fno-exceptions",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fno-threadsafe-statics",
+        "-Wno-error=narrowing",
+        "-flto",
+        "-w",
+        "-x",
+        "c++",
+        "-E",
+        "-CC",
+        "-mmcu=atmega2560",
+        "-DF_CPU=16000000L",
+        "-DARDUINO=10607",
+        "-DARDUINO_AVR_MEGA2560",
+        "-DARDUINO_ARCH_AVR",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
+        "-I/root/Arduino/libraries/LiquidCrystal/src",
+        "/root/TESLAX/build/sketch/TESLAX.ino.cpp.merged",
+        "-o",
+        "/dev/null",
+        "-MMD",
+        "-MF",
+        "/root/TESLAX/build/sketch/TESLAX.ino.cpp.merged.libsdetect.d"
+      ]
+    }
+  },
+  {
+    "missing_include_h": "DHT.h"
+  },
+  {
+    "added_include_path": "/root/Arduino/libraries/DHT_sensor_library"
+  },
+  {
+    "compile": {
+      "source_path": "/root/TESLAX/build/sketch/TESLAX.ino.cpp.merged",
+      "depfile_path": "/root/TESLAX/build/sketch/TESLAX.ino.cpp.merged.libsdetect.d"
+    },
+    "compile_task": {
+      "args": [
+        "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
+        "-c",
+        "-g",
+        "-Os",
+        "-w",
+        "-std=gnu++11",
+        "-fpermissive",
+        "-fno-exceptions",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fno-threadsafe-statics",
+        "-Wno-error=narrowing",
+        "-flto",
+        "-w",
+        "-x",
+        "c++",
+        "-E",
+        "-CC",
+        "-mmcu=atmega2560",
+        "-DF_CPU=16000000L",
+        "-DARDUINO=10607",
+        "-DARDUINO_AVR_MEGA2560",
+        "-DARDUINO_ARCH_AVR",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
+        "-I/root/Arduino/libraries/LiquidCrystal/src",
+        "-I/root/Arduino/libraries/DHT_sensor_library",
+        "/root/TESLAX/build/sketch/TESLAX.ino.cpp.merged",
+        "-o",
+        "/dev/null",
+        "-MMD",
+        "-MF",
+        "/root/TESLAX/build/sketch/TESLAX.ino.cpp.merged.libsdetect.d"
+      ]
+    }
+  },
+  {
+    "missing_include_h": ""
+  },
+  {
+    "compile": {
+      "source_path": "/root/Arduino/libraries/LiquidCrystal/src/LiquidCrystal.cpp",
+      "depfile_path": "/root/TESLAX/build/libraries/LiquidCrystal/LiquidCrystal.cpp.libsdetect.d"
+    },
+    "compile_task": {
+      "args": [
+        "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
+        "-c",
+        "-g",
+        "-Os",
+        "-w",
+        "-std=gnu++11",
+        "-fpermissive",
+        "-fno-exceptions",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fno-threadsafe-statics",
+        "-Wno-error=narrowing",
+        "-flto",
+        "-w",
+        "-x",
+        "c++",
+        "-E",
+        "-CC",
+        "-mmcu=atmega2560",
+        "-DF_CPU=16000000L",
+        "-DARDUINO=10607",
+        "-DARDUINO_AVR_MEGA2560",
+        "-DARDUINO_ARCH_AVR",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
+        "-I/root/Arduino/libraries/LiquidCrystal/src",
+        "-I/root/Arduino/libraries/DHT_sensor_library",
+        "/root/Arduino/libraries/LiquidCrystal/src/LiquidCrystal.cpp",
+        "-o",
+        "/dev/null",
+        "-MMD",
+        "-MF",
+        "/root/TESLAX/build/libraries/LiquidCrystal/LiquidCrystal.cpp.libsdetect.d"
+      ]
+    }
+  },
+  {
+    "missing_include_h": ""
+  },
+  {
+    "compile": {
+      "source_path": "/root/Arduino/libraries/DHT_sensor_library/DHT.cpp",
+      "depfile_path": "/root/TESLAX/build/libraries/DHT_sensor_library/DHT.cpp.libsdetect.d"
+    },
+    "compile_task": {
+      "args": [
+        "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
+        "-c",
+        "-g",
+        "-Os",
+        "-w",
+        "-std=gnu++11",
+        "-fpermissive",
+        "-fno-exceptions",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fno-threadsafe-statics",
+        "-Wno-error=narrowing",
+        "-flto",
+        "-w",
+        "-x",
+        "c++",
+        "-E",
+        "-CC",
+        "-mmcu=atmega2560",
+        "-DF_CPU=16000000L",
+        "-DARDUINO=10607",
+        "-DARDUINO_AVR_MEGA2560",
+        "-DARDUINO_ARCH_AVR",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
+        "-I/root/Arduino/libraries/LiquidCrystal/src",
+        "-I/root/Arduino/libraries/DHT_sensor_library",
+        "/root/Arduino/libraries/DHT_sensor_library/DHT.cpp",
+        "-o",
+        "/dev/null",
+        "-MMD",
+        "-MF",
+        "/root/TESLAX/build/libraries/DHT_sensor_library/DHT.cpp.libsdetect.d"
+      ]
+    }
+  },
+  {
+    "missing_include_h": ""
+  },
+  {
+    "compile": {
+      "source_path": "/root/Arduino/libraries/DHT_sensor_library/DHT_U.cpp",
+      "depfile_path": "/root/TESLAX/build/libraries/DHT_sensor_library/DHT_U.cpp.libsdetect.d"
+    },
+    "compile_task": {
+      "args": [
+        "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
+        "-c",
+        "-g",
+        "-Os",
+        "-w",
+        "-std=gnu++11",
+        "-fpermissive",
+        "-fno-exceptions",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fno-threadsafe-statics",
+        "-Wno-error=narrowing",
+        "-flto",
+        "-w",
+        "-x",
+        "c++",
+        "-E",
+        "-CC",
+        "-mmcu=atmega2560",
+        "-DF_CPU=16000000L",
+        "-DARDUINO=10607",
+        "-DARDUINO_AVR_MEGA2560",
+        "-DARDUINO_ARCH_AVR",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
+        "-I/root/Arduino/libraries/LiquidCrystal/src",
+        "-I/root/Arduino/libraries/DHT_sensor_library",
+        "/root/Arduino/libraries/DHT_sensor_library/DHT_U.cpp",
+        "-o",
+        "/dev/null",
+        "-MMD",
+        "-MF",
+        "/root/TESLAX/build/libraries/DHT_sensor_library/DHT_U.cpp.libsdetect.d"
+      ]
+    }
+  },
+  {
+    "missing_include_h": "Adafruit_Sensor.h"
+  },
+  {
+    "added_include_path": "/root/Arduino/libraries/Adafruit_Unified_Sensor"
+  },
+  {
+    "compile": {
+      "source_path": "/root/Arduino/libraries/DHT_sensor_library/DHT_U.cpp",
+      "depfile_path": "/root/TESLAX/build/libraries/DHT_sensor_library/DHT_U.cpp.libsdetect.d"
+    },
+    "compile_task": {
+      "args": [
+        "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
+        "-c",
+        "-g",
+        "-Os",
+        "-w",
+        "-std=gnu++11",
+        "-fpermissive",
+        "-fno-exceptions",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fno-threadsafe-statics",
+        "-Wno-error=narrowing",
+        "-flto",
+        "-w",
+        "-x",
+        "c++",
+        "-E",
+        "-CC",
+        "-mmcu=atmega2560",
+        "-DF_CPU=16000000L",
+        "-DARDUINO=10607",
+        "-DARDUINO_AVR_MEGA2560",
+        "-DARDUINO_ARCH_AVR",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
+        "-I/root/Arduino/libraries/LiquidCrystal/src",
+        "-I/root/Arduino/libraries/DHT_sensor_library",
+        "-I/root/Arduino/libraries/Adafruit_Unified_Sensor",
+        "/root/Arduino/libraries/DHT_sensor_library/DHT_U.cpp",
+        "-o",
+        "/dev/null",
+        "-MMD",
+        "-MF",
+        "/root/TESLAX/build/libraries/DHT_sensor_library/DHT_U.cpp.libsdetect.d"
+      ]
+    }
+  },
+  {
+    "missing_include_h": ""
+  },
+  {
+    "compile": {
+      "source_path": "/root/Arduino/libraries/Adafruit_Unified_Sensor/Adafruit_Sensor.cpp",
+      "depfile_path": "/root/TESLAX/build/libraries/Adafruit_Unified_Sensor/Adafruit_Sensor.cpp.libsdetect.d"
+    },
+    "compile_task": {
+      "args": [
+        "/root/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
+        "-c",
+        "-g",
+        "-Os",
+        "-w",
+        "-std=gnu++11",
+        "-fpermissive",
+        "-fno-exceptions",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fno-threadsafe-statics",
+        "-Wno-error=narrowing",
+        "-flto",
+        "-w",
+        "-x",
+        "c++",
+        "-E",
+        "-CC",
+        "-mmcu=atmega2560",
+        "-DF_CPU=16000000L",
+        "-DARDUINO=10607",
+        "-DARDUINO_AVR_MEGA2560",
+        "-DARDUINO_ARCH_AVR",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/cores/arduino",
+        "-I/root/.arduino15/packages/arduino/hardware/avr/1.8.8/variants/mega",
+        "-I/root/Arduino/libraries/LiquidCrystal/src",
+        "-I/root/Arduino/libraries/DHT_sensor_library",
+        "-I/root/Arduino/libraries/Adafruit_Unified_Sensor",
+        "/root/Arduino/libraries/Adafruit_Unified_Sensor/Adafruit_Sensor.cpp",
+        "-o",
+        "/dev/null",
+        "-MMD",
+        "-MF",
+        "/root/TESLAX/build/libraries/Adafruit_Unified_Sensor/Adafruit_Sensor.cpp.libsdetect.d"
+      ]
+    }
+  },
+  {
+    "missing_include_h": ""
+  }
+]
