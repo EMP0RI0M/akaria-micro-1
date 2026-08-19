@@ -1,0 +1,9 @@
+name: TESLAX END B FAULT
+version: 1
+steps:
+  - wait-serial: 'TESLAX,BOOT,MEGA2560'
+  - set-control: {part-id: sonar, control: distance, value: 100}
+  - set-control: {part-id: core, control: coilFaultB, value: 1}
+  - delay: 1500ms
+  - wait-serial: 'TESLAX,FAULT,END_B'
+  - wait-serial: 'faultB:1'

@@ -19,6 +19,8 @@
 #define PIN_RX_STATUS A2
 #define PIN_BUS_A A3
 #define PIN_BUS_B A4
+#define PIN_CURRENT_A A9
+#define PIN_CURRENT_B A11
 #define LCD_RS 30
 #define LCD_EN 31
 #define LCD_D4 32
@@ -27,3 +29,6 @@
 #define LCD_D7 35
 #define TEST_MODE 0
 #define TEST_SCENARIO 0
+
+#define PIN_CORE_FAULT_A 26
+#define PIN_CORE_FAULT_B 27

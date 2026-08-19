@@ -1,0 +1,8 @@
+name: TESLAX OVER TEMP
+version: 1
+steps:
+  - wait-serial: 'TESLAX,BOOT,MEGA2560'
+  - set-control: {part-id: sonar, control: distance, value: 100}
+  - set-control: {part-id: dht, control: temperature, value: 80}
+  - delay: 1500ms
+  - wait-serial: 'shutdownReason:"OVER_TEMP"'

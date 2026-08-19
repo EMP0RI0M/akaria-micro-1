@@ -1,0 +1,10 @@
+name: TESLAX NORMAL
+version: 1
+steps:
+  - wait-serial: 'TESLAX,BOOT,MEGA2560'
+  - set-control:
+      part-id: sonar
+      control: distance
+      value: 100
+  - delay: 1500ms
+  - wait-serial: 'faultA:0, faultB:0'
