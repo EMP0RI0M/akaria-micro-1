@@ -1,5 +1,7 @@
 #line 1 "/root/TESLAX/teslax_config.h"
 #pragma once
+#define REAL_SENSOR_MODE 0
+#define PIN_DISTANCE_MODEL A5
 #define PIN_TRIG 22
 #define PIN_ECHO 23
 #define PIN_DHT 24
