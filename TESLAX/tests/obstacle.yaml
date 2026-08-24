@@ -1,7 +1,0 @@
-name: TESLAX OBSTACLE
-version: 1
-steps:
-  - wait-serial: 'TESLAX,BOOT,MEGA2560'
-  - set-control: {part-id: core, control: distance, value: 250}
-  - delay: 1500ms
-  - wait-serial: 'shutdownReason:"DISTANCE"'

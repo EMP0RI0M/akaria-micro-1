@@ -1,8 +1,0 @@
-name: TESLAX HIGH BUS
-version: 1
-steps:
-  - wait-serial: 'TESLAX,BOOT,MEGA2560'
-  - set-control: {part-id: core, control: distance, value: 100}
-  - set-control: {part-id: core, control: busVoltageA, value: 5}
-  - delay: 1500ms
-  - wait-serial: 'shutdownReason:"HIGH_BUS"'
