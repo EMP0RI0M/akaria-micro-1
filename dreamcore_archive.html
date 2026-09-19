@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>THE DREAMCORE ARCHIVE — dreamcore · liminal spaces · anemoia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      /* DREAMCORE-DAY PALETTE */
+      --sky: #a8d8f0;
+      --light-sky: #c8e8f8;
+      --grass: #7ab648;
+      --grass-shadow: #5a9632;
+      --pink-cloud: #ffd6e8;
+      --white-house: #f0ece4;
+      
+      /* Theme variables default (DAY) */
+      --bg: var(--light-sky);
+      --panel-bg: var(--white-house);
+      --panel-border: #8ab8e8;
+      --text: #2a3b4c;
+      --accent: #d85c88;
+      --link: #2458a6;
+      --highlight: var(--pink-cloud);
+      --scanline-opacity: 0.12;
+      --shadow-color: rgba(90, 150, 50, 0.25);
+    }
+
+    [data-theme="night"] {
+      /* NIGHT-FLUORESCENT PALETTE */
+      --bg: #0c141f;
+      --panel-bg: #16222e;
+      --panel-border: #22374b;
+      --text: #cfe0d8;
+      --accent: #33ff66;
+      --link: #8ab8e8;
+      --highlight: #1c2e3d;
+      --scanline-opacity: 0.25;
+      --shadow-color: rgba(51, 255, 102, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Space Mono', monospace, "Courier New", Courier;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: background-color 0.4s ease, color 0.4s ease;
+      cursor: crosshair;
+      overflow-x: hidden;
+    }
+
+    /* CRT Scanlines overlay */
+    .crt-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.04));
+      background-size: 100% 4px, 6px 100%;
+      pointer-events: none;
+      z-index: 999;
+      opacity: var(--scanline-opacity);
+    }
+
+    /* Outer retro window */
+    .archive-wrapper {
+      width: 100%;
+      max-width: 780px;
+      margin: 20px auto 40px auto;
+      background: var(--panel-bg);
+      border: 3px double var(--panel-border);
+      box-shadow: 6px 6px 0px var(--shadow-color);
+      position: relative;
+    }
+
+    /* Header & Ticker */
+    .archive-header {
+      background: var(--panel-border);
+      padding: 10px 15px;
+      border-bottom: 2px solid var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .archive-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    .archive-subtitle {
+      font-size: 0.8rem;
+      opacity: 0.85;
+      font-style: italic;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn-toggle {
+      background: var(--panel-bg);
+      border: 1px solid var(--text);
+      padding: 3px 8px;
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    .btn-toggle:hover {
+      background: var(--highlight);
+    }
+
+    /* Marquee ticker */
+    .ticker-bar {
+      background: var(--highlight);
+      border-bottom: 1px dashed var(--panel-border);
+      padding: 6px 0;
+      overflow: hidden;
+      white-space: nowrap;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      letter-spacing: 1px;
+    }
+
+    .ticker-content {
+      display: inline-block;
+      animation: ticker 35s linear infinite;
+    }
+
+    @keyframes ticker {
+      0% { transform: translateX(100vw); }
+      100% { transform: translateX(-100%); }
+    }
+
+    /* Main Container */
+    .archive-body {
+      padding: 24px;
+    }
+
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1.15rem;
+      margin: 25px 0 12px 0;
+      padding-bottom: 4px;
+      border-bottom: 2px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+    }
+
+    .section-title::before {
+      content: "✦";
+      font-size: 0.9rem;
+    }
+
+    .intro-box {
+      background: rgba(0, 0, 0, 0.03);
+      border-left: 4px solid var(--accent);
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+
+    ul.resource-list {
+      list-style: none;
+      margin-bottom: 18px;
+    }
+
+    ul.resource-list li {
+      margin-bottom: 10px;
+      padding-left: 18px;
+      position: relative;
+    }
+
+    ul.resource-list li::before {
+      content: "›";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    .item-name {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    a {
+      color: var(--link);
+      text-decoration: underline;
+      transition: opacity 0.2s;
+    }
+
+    a:hover {
+      opacity: 0.7;
+    }
+
+    /* Palette boxes */
+    .palette-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin: 16px 0;
+    }
+
+    @media (max-width: 600px) {
+      .palette-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .palette-card {
+      border: 1px solid var(--panel-border);
+      padding: 12px;
+      background: var(--highlight);
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+    }
+
+    .palette-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: var(--accent);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .swatch-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .swatch-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      padding: 2px 6px;
+      cursor: pointer;
+    }
+
+    .swatch-color {
+      width: 14px;
+      height: 14px;
+      border: 1px solid rgba(0,0,0,0.3);
+      display: inline-block;
+    }
+
+    .quote-box {
+      border: 1px dashed var(--accent);
+      padding: 14px;
+      margin: 20px 0;
+      font-size: 0.9rem;
+      text-align: center;
+      background: rgba(0,0,0,0.02);
+    }
+
+    /* 88x31 Button Grid */
+    .button-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin: 25px 0 15px 0;
+      padding: 14px;
+      background: rgba(0,0,0,0.04);
+      border: 1px solid var(--panel-border);
+    }
+
+    .btn-88x31 {
+      width: 88px;
+      height: 31px;
+      border: 2px outset #ffffff;
+      background: #000000;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'VT323', monospace;
+      font-size: 11px;
+      line-height: 1.1;
+      text-align: center;
+      text-transform: uppercase;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 1px 1px 0px rgba(0,0,0,0.5);
+    }
+
+    .btn-88x31:active {
+      border: 2px inset #ffffff;
+    }
+
+    .btn-88x31.dreamcore {
+      background: linear-gradient(135deg, #a8d8f0 0%, #ffd6e8 100%);
+      color: #111;
+      font-weight: bold;
+    }
+
+    .btn-88x31.anemoia {
+      background: #16222e;
+      color: #33ff66;
+      border-color: #33ff66;
+    }
+
+    .btn-88x31.noclip {
+      background: #ffd6e8;
+      color: #333;
+      border-color: #d85c88;
+    }
+
+    .btn-88x31.hand {
+      background: #7ab648;
+      color: #ffffff;
+    }
+
+    .btn-88x31.door {
+      background: #2458a6;
+      color: #ffffff;
+    }
+
+    /* Footer & Visitor Counter */
+    .archive-footer {
+      border-top: 2px solid var(--panel-border);
+      padding: 20px;
+      text-align: center;
+      background: var(--highlight);
+      font-size: 0.85rem;
+    }
+
+    .visitor-counter {
+      font-family: 'VT323', monospace;
+      font-size: 26px;
+      background: #000000;
+      color: #33ff66;
+      padding: 4px 12px;
+      border: 2px inset #666;
+      display: inline-block;
+      margin: 10px 0;
+      letter-spacing: 3px;
+    }
+
+    .footer-note {
+      font-size: 0.75rem;
+      opacity: 0.75;
+      margin-top: 6px;
+    }
+
+    /* Toast for copied colors */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      background: var(--text);
+      color: var(--panel-bg);
+      padding: 6px 14px;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      border-radius: 2px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body data-theme="day">
+  <div class="crt-overlay"></div>
+  <div id="toast" class="toast">Copied to clipboard!</div>
+
+  <div class="archive-wrapper">
+    <!-- Header -->
+    <header class="archive-header">
+      <div>
+        <h1 class="archive-title">THE DREAMCORE ARCHIVE</h1>
+        <div class="archive-subtitle">dreamcore · liminal spaces · anemoia — archiving places you never visited</div>
+      </div>
+      <div class="header-controls">
+        <button id="themeToggle" class="btn-toggle" title="Toggle Day/Night Palette">☀ eternal 3 p.m.</button>
+        <button id="audioToggle" class="btn-toggle" title="Toggle Anemoia Drone Sound">♫ sound</button>
+      </div>
+    </header>
+
+    <!-- Marquee Ticker -->
+    <div class="ticker-bar">
+      <div class="ticker-content">
+        welcome to the dreamcore archive ✦ this site looks best at 3 p.m. on a summer that never happened ✦ you've been here before, even if you don't remember ✦ don't close the door on your way out ✦ the counter is counting you ✦
+      </div>
+    </div>
+
+    <!-- Main Content Body -->
+    <main class="archive-body">
+      <div class="intro-box">
+        <strong>Resources & The Toolbox.</strong> Make your own dreamcore has the technique; here's the material: programs, fonts, palettes and image quarries. All free or libre, because dreamcore with a budget stops working.
+      </div>
+
+      <!-- Section: Image Editors -->
+      <h2 class="section-title">Image Editors</h2>
+      <ul class="resource-list">
+        <li><span class="item-name"><a href="https://www.photopea.com/" target="_blank" rel="noopener">Photopea</a></span> — Photoshop in the browser, free, no account. The genre's default tool.</li>
+        <li><span class="item-name"><a href="https://www.gimp.org/" target="_blank" rel="noopener">GIMP</a></span> — The free desktop classic. Its "HSV noise" filter is the perfect grain machine.</li>
+        <li><span class="item-name"><a href="https://jspaint.app/" target="_blank" rel="noopener">Windows XP Paint (jspaint.app)</a></span> — For authentic pixelated text, nothing beats it.</li>
+      </ul>
+
+      <!-- Section: 3D & Cheap Render -->
+      <h2 class="section-title">3D and Cheap Render</h2>
+      <ul class="resource-list">
+        <li><span class="item-name"><a href="https://www.blender.org/" target="_blank" rel="noopener">Blender</a></span> — Free. Remember the house rule: use it BADLY (few samples, 640×480, no antialiasing).</li>
+        <li><span class="item-name"><a href="https://crocotile3d.com/" target="_blank" rel="noopener">Crocotile 3D</a></span> — PS1-style tile modelling. Paid but cheap; the low-poly comes for free.</li>
+        <li><span class="item-name">RPG Maker 2003</span> — If you want to just make your own Yume Nikki.</li>
+      </ul>
+
+      <!-- Section: Photo Quarries -->
+      <h2 class="section-title">Photo Quarries (Free Licence)</h2>
+      <ul class="resource-list">
+        <li><span class="item-name"><a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a></span> — The main mine. Search <em>"empty mall interior"</em>, <em>"school hallway"</em>, <em>"dead mall"</em>… Five photos in the gallery came from here, with author and licence in wallpapers.</li>
+        <li><span class="item-name"><a href="https://archive.org/" target="_blank" rel="noopener">Internet Archive</a></span> — Dead websites, old-software screenshots, scanned magazines.</li>
+        <li><span class="item-name"><a href="https://www.flickr.com/search/?license=2%2C3%2C4%2C5%2C6%2C9" target="_blank" rel="noopener">Flickr (Creative Commons filter)</a></span> — The great family album of the 2004–2012 era, which is exactly the texture you're after.</li>
+        <li><span class="item-name">Your own camera roll.</span> Seriously: your family's 2008 phone album is worth more than any stock library.</li>
+      </ul>
+
+      <!-- Section: Fonts -->
+      <h2 class="section-title">Fonts</h2>
+      <ul class="resource-list">
+        <li><span class="item-name">The usual system ones:</span> Times New Roman, Courier New, Comic Sans MS. You already have them; that's the point.</li>
+        <li><span class="item-name"><a href="https://int10h.org/oldschool-pc-fonts/" target="_blank" rel="noopener">The Ultimate Oldschool PC Font Pack</a></span> — BIOS and MS-DOS fonts, lovingly digitized. To caption like a modem.</li>
+      </ul>
+
+      <!-- Section: House Palettes -->
+      <h2 class="section-title">House Palettes</h2>
+      <p>The visual swatches are in the look; here in raw (click any swatch to copy hex code):</p>
+      
+      <div class="palette-container">
+        <!-- DREAMCORE-DAY -->
+        <div class="palette-card">
+          <div class="palette-title">
+            <span>DREAMCORE-DAY.PAL</span>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch-item" onclick="copyHex('#a8d8f0', 'sky')">
+              <span class="swatch-color" style="background:#a8d8f0;"></span> #a8d8f0 sky
+            </div>
+            <div class="swatch-item" onclick="copyHex('#c8e8f8', 'light sky')">
+              <span class="swatch-color" style="background:#c8e8f8;"></span> #c8e8f8 light sky
+            </div>
+            <div class="swatch-item" onclick="copyHex('#7ab648', 'grass')">
+              <span class="swatch-color" style="background:#7ab648;"></span> #7ab648 grass
+            </div>
+            <div class="swatch-item" onclick="copyHex('#5a9632', 'grass shadow')">
+              <span class="swatch-color" style="background:#5a9632;"></span> #5a9632 grass shadow
+            </div>
+            <div class="swatch-item" onclick="copyHex('#ffd6e8', 'pink cloud')">
+              <span class="swatch-color" style="background:#ffd6e8;"></span> #ffd6e8 pink cloud
+            </div>
+            <div class="swatch-item" onclick="copyHex('#f0ece4', 'white house')">
+              <span class="swatch-color" style="background:#f0ece4;"></span> #f0ece4 white house
+            </div>
+          </div>
+        </div>
+
+        <!-- NIGHT-FLUORESCENT -->
+        <div class="palette-card">
+          <div class="palette-title">
+            <span>NIGHT-FLUORESCENT.PAL</span>
+          </div>
+          <div class="swatch-row">
+            <div class="swatch-item" onclick="copyHex('#0c141f', 'background')">
+              <span class="swatch-color" style="background:#0c141f;"></span> #0c141f bg
+            </div>
+            <div class="swatch-item" onclick="copyHex('#16222e', 'panel')">
+              <span class="swatch-color" style="background:#16222e;"></span> #16222e panel
+            </div>
+            <div class="swatch-item" onclick="copyHex('#cfe0d8', 'pale ink')">
+              <span class="swatch-color" style="background:#cfe0d8;"></span> #cfe0d8 pale ink
+            </div>
+            <div class="swatch-item" onclick="copyHex('#33ff66', 'phosphor')">
+              <span class="swatch-color" style="background:#33ff66;"></span> #33ff66 phosphor
+            </div>
+            <div class="swatch-item" onclick="copyHex('#8ab8e8', 'moon link')">
+              <span class="swatch-color" style="background:#8ab8e8;"></span> #8ab8e8 moon link
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: For your desktop & Old web -->
+      <h2 class="section-title">For Your Desktop & Old Web</h2>
+      <ul class="resource-list">
+        <li><span class="item-name">The Customization Room</span> — The archive's icon pack (Windows/Mac/Linux) and the 6-step liminal-desktop guide: wallpaper, icons, cursor, fonts, sounds and terminal.</li>
+        <li><span class="item-name"><a href="https://neocities.org/" target="_blank" rel="noopener">Neocities</a></span> — Free neighbourhood hosting. This archive will live here.</li>
+        <li><span class="item-name"><a href="https://gifcities.org/" target="_blank" rel="noopener">GifCities</a></span> — The Internet Archive's GeoCities GIF search engine. Pure archaeology.</li>
+        <li><span class="item-name"><a href="https://hekate2.github.io/buttonmaker/" target="_blank" rel="noopener">88×31 Button Maker</a></span> — To make your button and link up with ours.</li>
+      </ul>
+
+      <!-- Quote Rule -->
+      <div class="quote-box">
+        <strong>resource rule:</strong> credit authors when they exist, respect licences, and don't pay for anything the internet gives away. the genre was born free.
+      </div>
+
+      <!-- 88x31 Badges -->
+      <div class="button-grid">
+        <div class="btn-88x31 dreamcore">
+          <span>DREAMCORE</span>
+          <span>ARCHIVE</span>
+        </div>
+        <div class="btn-88x31 anemoia">
+          <span>ANEMOIA</span>
+          <span>INSIDE</span>
+        </div>
+        <div class="btn-88x31 noclip">
+          <span>NOCLIP</span>
+          <span>ZONE</span>
+        </div>
+        <div class="btn-88x31 hand">
+          <span>MADE BY</span>
+          <span>HAND</span>
+        </div>
+        <div class="btn-88x31 door">
+          <span>OPEN A</span>
+          <span>DOOR</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="archive-footer">
+      <div>visitor no. <span id="visitorCount" class="visitor-counter">005232</span></div>
+      <div class="footer-note">(the counter lives in your browser. like memories do.)</div>
+      <div style="margin-top: 8px;">best viewed at 800×600 · with a cold can of something · last updated: 09/19/2026</div>
+    </footer>
+  </div>
+
+  <script>
+    // Theme toggle
+    const themeBtn = document.getElementById('themeToggle');
+    let isDay = true;
+    themeBtn.addEventListener('click', () => {
+      isDay = !isDay;
+      document.body.setAttribute('data-theme', isDay ? 'day' : 'night');
+      themeBtn.textContent = isDay ? '☀ eternal 3 p.m.' : '☾ fluorescent 3 a.m.';
+    });
+
+    // Visitor counter with localStorage persistence
+    const counterEl = document.getElementById('visitorCount');
+    let count = parseInt(localStorage.getItem('dreamcore_visitor_count') || '5232', 10);
+    count += 1;
+    localStorage.setItem('dreamcore_visitor_count', count.toString());
+    counterEl.textContent = count.toString().padStart(6, '0');
+
+    // Clipboard copy
+    function copyHex(hex, name) {
+      navigator.clipboard.writeText(hex);
+      const toast = document.getElementById('toast');
+      toast.textContent = `Copied ${name} (${hex})`;
+      toast.style.opacity = '1';
+      setTimeout(() => {
+        toast.style.opacity = '0';
+      }, 1800);
+    }
+
+    // Ambient anemoia drone synthesizer using Web Audio API
+    let audioCtx = null;
+    let isPlaying = false;
+    let masterGain = null;
+
+    document.getElementById('audioToggle').addEventListener('click', () => {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        masterGain.connect(audioCtx.destination);
+
+        // Low frequency binaural drone
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const filter = audioCtx.createBiquadFilter();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(108.0, audioCtx.currentTime); // A2 drone
+
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(162.0, audioCtx.currentTime); // E3 harmonic
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(280, audioCtx.currentTime);
+
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(masterGain);
+
+        osc1.start();
+        osc2.start();
+        isPlaying = true;
+        document.getElementById('audioToggle').textContent = '♫ drone [ON]';
+      } else {
+        if (isPlaying) {
+          masterGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+          isPlaying = false;
+          document.getElementById('audioToggle').textContent = '♫ sound';
+        } else {
+          masterGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+          isPlaying = true;
+          document.getElementById('audioToggle').textContent = '♫ drone [ON]';
+        }
+      }
+    });
+  </script>
+</body>
+</html>
